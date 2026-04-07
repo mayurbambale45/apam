@@ -1,0 +1,102 @@
+[
+  {
+    "id": "1",
+    "role": "administrator",
+    "email": "admin@walchandsangli.ac.in"
+  },
+  {
+    "id": "2",
+    "role": "examination_system",
+    "email": "examcell@walchandsangli.ac.in"
+  },
+  {
+    "id": "3",
+    "role": "teacher",
+    "email": "a.deshpande@walchandsangli.ac.in"
+  },
+  {
+    "id": "4",
+    "role": "teacher",
+    "email": "s.kulkarni@walchandsangli.ac.in"
+  },
+  {
+    "id": "5",
+    "role": "teacher",
+    "email": "p.joshi@walchandsangli.ac.in"
+  },
+  {
+    "id": "6",
+    "role": "teacher",
+    "email": "v.bhosale@walchandsangli.ac.in"
+  },
+  {
+    "id": "7",
+    "role": "student",
+    "email": "prn2022027001@walchandsangli.ac.in"
+  },
+  {
+    "id": "8",
+    "role": "student",
+    "email": "prn2022027002@walchandsangli.ac.in"
+  },
+  {
+    "id": "9",
+    "role": "student",
+    "email": "prn2022027003@walchandsangli.ac.in"
+  },
+  {
+    "id": "10",
+    "role": "student",
+    "email": "prn2022027004@walchandsangli.ac.in"
+  },
+  {
+    "id": "11",
+    "role": "student",
+    "email": "prn2022044001@walchandsangli.ac.in"
+  },
+  {
+    "id": "12",
+    "role": "student",
+    "email": "prn2022044002@walchandsangli.ac.in"
+  },
+  {
+    "id": "13",
+    "role": "student",
+    "email": "prn2022037001@walchandsangli.ac.in"
+  },
+  {
+    "id": "14",
+    "role": "student",
+    "email": "prn2022037002@walchandsangli.ac.in"
+  },
+  {
+    "id": "15",
+    "role": "student",
+    "email": "prn2022066001@walchandsangli.ac.in"
+  },
+  {
+    "id": "16",
+    "role": "student",
+    "email": "prn2022066002@walchandsangli.ac.in"
+  },
+  {
+    "id": "17",
+    "role": "student",
+    "email": "prn2022012001@walchandsangli.ac.in"
+  },
+  {
+    "id": "18",
+    "role": "student",
+    "email": "prn2022012002@walchandsangli.ac.in"
+  },
+  {
+    "id": "19",
+    "role": "student",
+    "email": "prn2022004001@walchandsangli.ac.in"
+  },
+  {
+    "id": "20",
+    "role": "student",
+    "email": "prn2022004002@walchandsangli.ac.in"
+  }
+]
