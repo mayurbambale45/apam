@@ -217,10 +217,13 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
                 ex.course_code AS "courseCode", 
                 s.status AS "status", 
                 e.total_score AS "totalScore",
-                e.id AS "evaluationId"
+                e.id AS "evaluationId",
+                e.grievance_marks AS "grievanceMarks",
+                (g.id IS NOT NULL) AS "hasRaisedGrievance"
             FROM submissions s
             JOIN exams ex ON s.exam_id = ex.id
             LEFT JOIN evaluations e ON s.id = e.submission_id
+            LEFT JOIN grievances g ON e.id = g.evaluation_id
             WHERE s.student_id = $1
             ORDER BY s.upload_timestamp DESC
         `;
@@ -232,6 +235,51 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
     } catch (error) {
         console.error('Student Exams Fetch Error:', error);
         res.status(500).json({ error: 'Internal server error while fetching student exams.' });
+    }
+});
+
+/**
+ * POST /api/dashboard/student/grievance
+ * Allows a student to raise a grievance for a specific evaluation.
+ */
+router.post('/student/grievance', authenticateToken, authorizeRoles('student'), async (req, res) => {
+    const student_id = req.user.id;
+    const { evaluation_id } = req.body;
+
+    if (!evaluation_id) {
+        return res.status(400).json({ error: 'evaluation_id is required.' });
+    }
+
+    try {
+        // verify evaluation belongs to student
+        const evalCheckQuery = `
+            SELECT s.student_id 
+            FROM evaluations e
+            JOIN submissions s ON e.submission_id = s.id
+            WHERE e.id = $1
+        `;
+        const evalCheck = await db.query(evalCheckQuery, [evaluation_id]);
+        
+        if (evalCheck.rows.length === 0 || evalCheck.rows[0].student_id !== student_id) {
+            return res.status(403).json({ error: 'You are not authorized or evaluation does not exist.' });
+        }
+
+        const insertQuery = `
+            INSERT INTO grievances (evaluation_id, student_id)
+            VALUES ($1, $2)
+            ON CONFLICT (evaluation_id) DO NOTHING
+            RETURNING id
+        `;
+        const result = await db.query(insertQuery, [evaluation_id, student_id]);
+        
+        if (result.rowCount === 0) {
+            return res.status(400).json({ error: 'Grievance already raised for this evaluation.' });
+        }
+
+        res.status(200).json({ message: 'Grievance successfully raised.' });
+    } catch (error) {
+        console.error('Raise Grievance Error:', error);
+        res.status(500).json({ error: 'Internal server error while raising grievance.' });
     }
 });
 
@@ -370,6 +418,127 @@ router.get('/coordinator/exams', authenticateToken, authorizeRoles('examination_
     } catch (error) {
         console.error('Coordinator Exams Fetch Error:', error);
         res.status(500).json({ error: 'Internal server error while fetching coordinator exam data.' });
+    }
+});
+
+// ==========================================
+// TEACHER ANALYTICS API
+// ==========================================
+
+/**
+ * GET /api/dashboard/teacher/analytics/:exam_id
+ * Returns in-depth analytics for a single exam:
+ *   - count, avg, high, low scores
+ *   - top 5 performers
+ *   - per-question average performance
+ *   - flagged paper count
+ *   - grievance count
+ * Restricted to 'teacher' and 'administrator'.
+ */
+router.get('/teacher/analytics/:exam_id', authenticateToken, authorizeRoles('teacher', 'administrator'), async (req, res) => {
+    const { exam_id } = req.params;
+
+    try {
+        // 1. Summary stats
+        const summaryQuery = `
+            SELECT
+                COUNT(DISTINCT s.id) AS "totalStudents",
+                COALESCE(ROUND(AVG(ev.total_score)::numeric, 1), 0) AS "avgScore",
+                COALESCE(MAX(ev.total_score), 0) AS "highScore",
+                COALESCE(MIN(ev.total_score), 0) AS "lowScore",
+                COUNT(CASE WHEN ev.confidence_flag = true THEN 1 END) AS "flaggedCount"
+            FROM submissions s
+            LEFT JOIN evaluations ev ON s.id = ev.submission_id
+            WHERE s.exam_id = $1
+        `;
+        const summaryResult = await db.query(summaryQuery, [exam_id]);
+
+        // 2. All evaluations (for histogram on frontend)
+        const evalsQuery = `
+            SELECT ev.total_score
+            FROM evaluations ev
+            JOIN submissions s ON ev.submission_id = s.id
+            WHERE s.exam_id = $1
+        `;
+        const evalsResult = await db.query(evalsQuery, [exam_id]);
+
+        // 3. Top 5 performers
+        const topQuery = `
+            SELECT u.full_name AS student_name, sp.prn_number, sp.department, ev.total_score
+            FROM evaluations ev
+            JOIN submissions s ON ev.submission_id = s.id
+            JOIN users u ON s.student_id = u.id
+            LEFT JOIN students_profile sp ON u.id = sp.user_id
+            WHERE s.exam_id = $1
+            ORDER BY ev.total_score DESC
+            LIMIT 5
+        `;
+        const topResult = await db.query(topQuery, [exam_id]);
+
+        // 4. Per-question average scores (from JSONB detailed_feedback)
+        const rubricQuery = `
+            SELECT rq.question_number, rq.max_marks
+            FROM rubrics r
+            JOIN rubric_questions rq ON r.id = rq.rubric_id
+            WHERE r.exam_id = $1
+            ORDER BY rq.question_number ASC
+        `;
+        const rubricResult = await db.query(rubricQuery, [exam_id]);
+
+        // Extract per-question scores from JSONB - each row's detailed_feedback is an array
+        const feedbackQuery = `
+            SELECT ev.detailed_feedback
+            FROM evaluations ev
+            JOIN submissions s ON ev.submission_id = s.id
+            WHERE s.exam_id = $1
+        `;
+        const feedbackResult = await db.query(feedbackQuery, [exam_id]);
+
+        // Compute avg score per question number across all evaluations
+        const questionAccum = {};  // { question_number: { total: X, count: Y } }
+        for (const row of feedbackResult.rows) {
+            const feedback = row.detailed_feedback;
+            const items = Array.isArray(feedback) ? feedback : (feedback?.questions || feedback?.breakdown || []);
+            for (const item of items) {
+                const qn = item.questionNumber || item.question_number;
+                const score = parseFloat(item.score || item.awarded_marks || 0);
+                if (qn) {
+                    if (!questionAccum[qn]) questionAccum[qn] = { total: 0, count: 0 };
+                    questionAccum[qn].total += score;
+                    questionAccum[qn].count += 1;
+                }
+            }
+        }
+
+        const questionStats = rubricResult.rows.map(rq => ({
+            question_number: rq.question_number,
+            max_marks: rq.max_marks,
+            avg_score: questionAccum[rq.question_number]
+                ? (questionAccum[rq.question_number].total / questionAccum[rq.question_number].count).toFixed(2)
+                : '0.00'
+        }));
+
+        // 5. Grievance count
+        const grievanceQuery = `
+            SELECT COUNT(g.id) AS grievance_count
+            FROM grievances g
+            JOIN evaluations ev ON g.evaluation_id = ev.id
+            JOIN submissions s ON ev.submission_id = s.id
+            WHERE s.exam_id = $1
+        `;
+        const grievanceResult = await db.query(grievanceQuery, [exam_id]);
+
+        res.status(200).json({
+            ...summaryResult.rows[0],
+            evaluations: evalsResult.rows,
+            topPerformers: topResult.rows,
+            questionStats,
+            grievanceSummary: parseInt(grievanceResult.rows[0].grievance_count)
+        });
+
+    } catch (error) {
+        console.error('Teacher Analytics Error:', error);
+        res.status(500).json({ error: 'Internal server error while fetching analytics.' });
     }
 });
 

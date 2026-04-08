@@ -9,6 +9,7 @@ const rubricRoutes = require('./routes/rubrics');
 const evaluationRoutes = require('./routes/evaluations');
 const dashboardRoutes = require('./routes/dashboards');
 const adminRoutes = require('./routes/admin');
+const pipelineRoutes = require('./routes/pipeline');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -47,6 +48,7 @@ app.use('/api/rubrics', rubricRoutes);
 app.use('/api/evaluate', evaluationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pipeline', pipelineRoutes);
 
 // Global Error Handling Middleware - Standard for Enterprise applications
 app.use((err, req, res, next) => {

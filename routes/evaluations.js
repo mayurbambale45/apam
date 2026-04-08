@@ -1,9 +1,57 @@
 const express = require('express');
 const db = require('../db');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
-const { evaluateSubmission } = require('../services/aiEvaluator');
+const { extractTextFromVision, evaluateExtractedText } = require('../services/aiEvaluator');
 
 const router = express.Router();
+
+// Helper function to extract and evaluate synchronously
+async function runSingleEvaluation(submission_id) {
+    // 1. Fetch submission details
+    const subRes = await db.query('SELECT s.file_path, s.exam_id, s.extracted_text FROM submissions s WHERE s.id = $1', [submission_id]);
+    if (subRes.rows.length === 0) throw new Error('Submission deleted.');
+    const submission = subRes.rows[0];
+
+    // 2. Fetch rubric
+    const rubricRes = await db.query(`
+        SELECT rq.question_number, rq.max_marks, rq.model_answer_text, rq.mandatory_keywords
+        FROM rubric_questions rq
+        JOIN rubrics r ON r.id = rq.rubric_id
+        WHERE r.exam_id = $1 ORDER BY rq.question_number ASC
+    `, [submission.exam_id]);
+
+    if (rubricRes.rows.length === 0) throw new Error('No rubric found for exam.');
+    const rubric = rubricRes.rows;
+
+    let extractedText = submission.extracted_text;
+
+    // 3. Extract Text if missing
+    if (!extractedText) {
+        extractedText = await extractTextFromVision(submission.file_path);
+        await db.query(`UPDATE submissions SET extracted_text = $1 WHERE id = $2`, [extractedText, submission_id]);
+    }
+
+    // 4. Evaluate Text
+    const aiResult = await evaluateExtractedText(extractedText, rubric);
+    const { total_score, question_wise, strengths, weaknesses, suggestions } = aiResult;
+
+    const structuredBreakdown = question_wise.map((qw, idx) => ({
+        questionNumber: idx + 1,
+        awardedMarks: qw.score,
+        max_marks: qw.max_marks,
+        justification: qw.feedback,
+        missing_points: qw.missing_points
+    }));
+
+    const detailedFeedback = {
+        breakdown: structuredBreakdown,
+        strengths,
+        weaknesses,
+        suggestions
+    };
+
+    return { totalScore: total_score, needsReview: false, questionBreakdown: detailedFeedback };
+}
 
 /**
  * POST /api/evaluate/:submission_id
@@ -14,18 +62,14 @@ router.post('/:submission_id', authenticateToken, authorizeRoles('examination_sy
     const { submission_id } = req.params;
 
     try {
-        // 1. Initial check - verify it hasn't been graded yet
         const existingEval = await db.query('SELECT id FROM evaluations WHERE submission_id = $1', [submission_id]);
         if (existingEval.rows.length > 0) {
             return res.status(409).json({ error: 'This submission has already been evaluated.' });
         }
 
-        // 2. Call the AI Evaluation Core Engine
-        const aiEvaluationResult = await evaluateSubmission(submission_id);
-
+        const aiEvaluationResult = await runSingleEvaluation(submission_id);
         const { totalScore, needsReview, questionBreakdown } = aiEvaluationResult;
 
-        // 3. Insert the new evaluation record into the database
         const insertEvalQuery = `
             INSERT INTO evaluations (submission_id, total_score, detailed_feedback, confidence_flag)
             VALUES ($1, $2, $3, $4)
@@ -36,11 +80,10 @@ router.post('/:submission_id', authenticateToken, authorizeRoles('examination_sy
             submission_id,
             totalScore,
             JSON.stringify(questionBreakdown),
-            needsReview === true ? true : false // Enforce strict boolean mappings
+            needsReview === true ? true : false
         ]);
 
-        // 4. Update the submission's status to 'graded'
-        await db.query(`UPDATE submissions SET status = 'graded' WHERE id = $1`, [submission_id]);
+        await db.query(`UPDATE submissions SET status = 'graded', pipeline_status = 'completed' WHERE id = $1`, [submission_id]);
 
         res.status(201).json({
             message: 'Evaluation processed successfully',
@@ -50,90 +93,67 @@ router.post('/:submission_id', authenticateToken, authorizeRoles('examination_sy
     } catch (error) {
         console.error('API Evaluation Controller Error:', error);
         
-        // Handle predictable service errors distinctly
         if (error.message && (error.message.includes('not found') || error.message.includes('rubric'))) {
             return res.status(404).json({ error: error.message });
         }
-
-        // Fallback 500 error handles timeouts/AI SDK crashes 
-        // without altering the underlying submission status (remains default 'uploaded').
         res.status(500).json({ error: 'An unexpected error occurred during AI evaluation. The status remains unchanged.' });
     }
 });
 
 /**
  * POST /api/evaluate/exam/:exam_id
- * Bulk-evaluates all pending student submissions for a specific exam using the core AI engine.
- * Restricted to 'examination_system' or 'teacher' roles.
+ * Directs to the pipeline module
  */
 router.post('/exam/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher'), async (req, res) => {
-    const { exam_id } = req.params;
+    // Deprecated in favor of /api/pipeline/run/:exam_id - redirecting call for backward compatibility
+    res.redirect(307, `/api/pipeline/run/${req.params.exam_id}`);
+});
+
+/**
+ * POST /api/evaluate/re-evaluate/:submission_id
+ * Deletes existing evaluation for a submission and re-runs the AI engine.
+ */
+router.post('/re-evaluate/:submission_id', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+    const { submission_id } = req.params;
 
     try {
-        // 1. Find all submissions for this exam that are uploaded but NOT yet evaluated
-        const pendingQuery = `
-            SELECT id 
-            FROM submissions 
-            WHERE exam_id = $1 AND status = 'uploaded'
+        const deleted = await db.query(
+            'DELETE FROM evaluations WHERE submission_id = $1 RETURNING id',
+            [submission_id]
+        );
+
+        if (deleted.rowCount > 0) {
+            await db.query(`UPDATE submissions SET status = 'uploaded', pipeline_status = 'evaluating' WHERE id = $1`, [submission_id]);
+        }
+
+        const aiEvaluationResult = await runSingleEvaluation(submission_id);
+        const { totalScore, needsReview, questionBreakdown } = aiEvaluationResult;
+
+        const insertEvalQuery = `
+            INSERT INTO evaluations (submission_id, total_score, detailed_feedback, confidence_flag)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, submission_id, total_score, confidence_flag, created_at
         `;
-        const pendingSubmissions = await db.query(pendingQuery, [exam_id]);
+        const newEvaluation = await db.query(insertEvalQuery, [
+            submission_id,
+            totalScore,
+            JSON.stringify(questionBreakdown),
+            needsReview === true
+        ]);
 
-        if (pendingSubmissions.rows.length === 0) {
-            return res.status(200).json({ message: 'No pending submissions found to evaluate for this exam.' });
-        }
+        await db.query(`UPDATE submissions SET status = 'graded', pipeline_status = 'completed' WHERE id = $1`, [submission_id]);
 
-        const evaluatedResults = [];
-        const errors = [];
-
-        // 2. Loop through each submission and evaluate
-        // Using a sequential loop instead of Promise.all to avoid hitting generative AI API rate limits
-        for (const sub of pendingSubmissions.rows) {
-            try {
-                const submission_id = sub.id;
-                
-                // Double check it hasn't somehow been graded while waiting in queue
-                const existingEval = await db.query('SELECT id FROM evaluations WHERE submission_id = $1', [submission_id]);
-                if (existingEval.rows.length > 0) continue;
-
-                // Call the AI Evaluation Core Engine
-                const aiEvaluationResult = await evaluateSubmission(submission_id);
-                const { totalScore, needsReview, questionBreakdown } = aiEvaluationResult;
-
-                // Insert the new evaluation record
-                const insertEvalQuery = `
-                    INSERT INTO evaluations (submission_id, total_score, detailed_feedback, confidence_flag)
-                    VALUES ($1, $2, $3, $4)
-                    RETURNING id, submission_id, total_score, confidence_flag
-                `;
-
-                const newEvaluation = await db.query(insertEvalQuery, [
-                    submission_id,
-                    totalScore,
-                    JSON.stringify(questionBreakdown),
-                    needsReview === true
-                ]);
-
-                // Update the submission's status to 'graded'
-                await db.query(`UPDATE submissions SET status = 'graded' WHERE id = $1`, [submission_id]);
-                
-                evaluatedResults.push(newEvaluation.rows[0]);
-
-            } catch (err) {
-                console.error(`Evaluation failed for submission ${sub.id}:`, err.message);
-                errors.push({ submission_id: sub.id, error: err.message });
-            }
-        }
-
-        res.status(200).json({
-            message: `Bulk evaluation completed. Evaluated ${evaluatedResults.length} / ${pendingSubmissions.rows.length} pending submissions.`,
-            successes: evaluatedResults.length,
-            failures: errors.length,
-            errors: errors.length > 0 ? errors : undefined
+        res.status(201).json({
+            message: 'Re-evaluation completed successfully.',
+            evaluation: newEvaluation.rows[0]
         });
 
     } catch (error) {
-        console.error('API Bulk Evaluation Controller Error:', error);
-        res.status(500).json({ error: 'An unexpected error occurred during bulk AI evaluation.' });
+        console.error('Re-Evaluation Error:', error);
+        if (error.message?.includes('not found') || error.message?.includes('rubric')) {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: 'An unexpected error occurred during re-evaluation.' });
     }
 });
 

@@ -116,22 +116,22 @@ const StudentDashboard = () => {
             {isLoadingStats ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[1,2,3,4].map(i => (
-                        <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 animate-pulse">
-                            <div className="h-10 w-10 bg-gray-100 rounded-xl mb-3"></div>
-                            <div className="h-3 bg-gray-100 rounded w-20 mb-2"></div>
-                            <div className="h-7 bg-gray-100 rounded w-12"></div>
+                        <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 animate-pulse">
+                            <div className="h-10 w-10 bg-gray-100 dark:bg-slate-700 rounded-xl mb-3"></div>
+                            <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-20 mb-2"></div>
+                            <div className="h-7 bg-gray-100 dark:bg-slate-700 rounded w-12"></div>
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {metricsCards.map((metric, index) => (
-                        <div key={index} className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
-                            <div className={`p-2.5 rounded-xl ${metric.lightBg} ${metric.lightText} w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                        <div key={index} className="group bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+                            <div className={`p-2.5 rounded-xl ${metric.lightBg} ${metric.lightText} dark:bg-opacity-20 w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
                                 <metric.icon size={20} />
                             </div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{metric.title}</p>
-                            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{metric.value}</h3>
+                            <p className="text-[11px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">{metric.title}</p>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">{metric.value}</h3>
                         </div>
                     ))}
                 </div>
@@ -140,21 +140,21 @@ const StudentDashboard = () => {
             {/* Exam Submissions Grid */}
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <BookOpen size={18} className="text-emerald-500" /> My Exam Submissions
                     </h2>
-                    <button onClick={() => navigate('/student/submissions')} className="text-sm text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+                    <button onClick={() => navigate('/student/submissions')} className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1">
                         View All <ArrowRight size={14} />
                     </button>
                 </div>
 
                 {isLoadingExams ? (
-                    <div className="p-12 text-center text-gray-400"><Loader2 className="animate-spin inline-block mr-2" size={20} />Loading your exams...</div>
+                    <div className="p-12 text-center text-gray-400 dark:text-gray-500"><Loader2 className="animate-spin inline-block mr-2" size={20} />Loading your exams...</div>
                 ) : exams.length === 0 ? (
-                    <div className="bg-white p-12 text-center rounded-2xl shadow-sm border border-gray-100">
-                        <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No Submissions Yet</h3>
-                        <p className="text-gray-500 text-sm">Your answer scripts will appear here once uploaded by the Examination Cell.</p>
+                    <div className="bg-white dark:bg-slate-800 p-12 text-center rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
+                        <FileText size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Submissions Yet</h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Your answer scripts will appear here once uploaded by the Examination Cell.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -162,41 +162,41 @@ const StudentDashboard = () => {
                             const isGraded = exam.status === 'graded';
 
                             return (
-                                <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+                                <div key={index} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col group">
                                     <div className="p-6 flex-1">
                                         <div className="flex justify-between items-start mb-4">
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-[10px] font-bold rounded-full uppercase tracking-wider">
                                                 <BookOpen size={12} /> {exam.courseCode}
                                             </span>
                                             {isGraded ? (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
                                                     <CheckCircle2 size={12} /> Graded
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
                                                     <Clock size={12} /> Pending
                                                 </span>
                                             )}
                                         </div>
 
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-emerald-700 transition-colors">{exam.examName}</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">{exam.examName}</h3>
 
                                         {isGraded && (
-                                            <div className="mt-5 pt-4 border-t border-gray-100 flex items-end justify-between">
+                                            <div className="mt-5 pt-4 border-t border-gray-100 dark:border-slate-700 flex items-end justify-between">
                                                 <div>
-                                                    <span className="text-xs text-gray-400 uppercase tracking-wider font-bold">Final Score</span>
-                                                    <p className="text-3xl font-black text-gray-900">{exam.totalScore}</p>
+                                                    <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider font-bold">Final Score</span>
+                                                    <p className="text-3xl font-black text-gray-900 dark:text-white">{exam.totalScore}</p>
                                                 </div>
-                                                <BarChart3 size={28} className="text-emerald-200" />
+                                                <BarChart3 size={28} className="text-emerald-200 dark:text-emerald-800" />
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-3.5">
+                                    <div className="border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 px-6 py-3.5">
                                         {isGraded && exam.evaluationId ? (
                                             <button
                                                 onClick={() => navigate('/student/submissions', { state: { viewEvalId: exam.evaluationId, examDetails: exam } })}
-                                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors"
+                                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-800/50 transition-colors"
                                             >
                                                 View Detailed AI Feedback
                                             </button>

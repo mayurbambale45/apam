@@ -1,11 +1,23 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FilePlus, LogOut, CheckSquare, ClipboardList, Shield, Users, BookOpen, UploadCloud, FileText, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, FilePlus, LogOut, CheckSquare, ClipboardList, Shield, Users, BookOpen, UploadCloud, FileText, BarChart3, PieChart, Activity, Layers, Sun, Moon } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 const DashboardLayout = () => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
+    
+    // Dark mode state with localStorage persistence
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode');
+        return saved ? JSON.parse(saved) : false;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+        if (isDarkMode) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+    }, [isDarkMode]);
 
     const handleLogout = () => {
         logout();
@@ -24,11 +36,12 @@ const DashboardLayout = () => {
                 { name: 'Configure Rubrics', path: '/instructor/rubrics', icon: CheckSquare },
                 { name: 'View Submissions', path: '/instructor/submissions', icon: FileText },
                 { name: 'Review Evaluations', path: '/instructor/evaluations', icon: BarChart3 },
+                { name: 'Analytics', path: '/instructor/analytics', icon: PieChart },
             ];
         } else if (user.role === 'student') {
             return [
                 { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-                { name: 'My Submissions', path: '/student/submissions', icon: FileText },
+                { name: 'Results', path: '/student/submissions', icon: FileText },
                 { name: 'My Profile', path: '/student/profile', icon: Users },
             ];
         } else if (user.role === 'administrator') {
@@ -42,7 +55,9 @@ const DashboardLayout = () => {
         } else if (user.role === 'examination_system') {
             return [
                 { name: 'Dashboard', path: '/examination_system-dashboard', icon: LayoutDashboard },
-                { name: 'Upload Submissions', path: '/examination_system/uploads', icon: UploadCloud },
+                { name: 'Upload Scripts', path: '/examination_system/uploads', icon: UploadCloud },
+                { name: 'Bulk Upload', path: '/examination_system/bulk-upload', icon: Layers },
+                { name: 'Pipeline Monitor', path: '/examination_system/pipeline', icon: Activity },
             ];
         }
         
@@ -55,7 +70,7 @@ const DashboardLayout = () => {
     const navLinks = getNavigationLinks();
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
             
             {/* Sidebar Navigation */}
             <aside className="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform duration-300">
@@ -109,11 +124,21 @@ const DashboardLayout = () => {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-16 bg-white shadow-sm flex items-center px-8 flex-shrink-0 z-10 border-b border-gray-200">
-                    <h1 className="text-xl font-semibold text-gray-800 capitalize">
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+                <header className="h-16 bg-white dark:bg-slate-800 shadow-sm flex justify-between items-center px-8 flex-shrink-0 z-10 border-b border-gray-200 dark:border-slate-700 transition-colors duration-300">
+                    <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 capitalize tracking-tight">
                         {user?.role?.replace('_', ' ')} Portal
                     </h1>
+                    
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsDarkMode(!isDarkMode)}
+                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"
+                            title="Toggle Dark Mode"
+                        >
+                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+                    </div>
                 </header>
                 
                 <div className="flex-1 overflow-y-auto p-8">

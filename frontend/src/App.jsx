@@ -17,10 +17,13 @@ import EvaluationResults from './pages/instructor/EvaluationResults';
 import UploadAnswerKey from './pages/instructor/UploadAnswerKey';
 import TeacherDashboard from './pages/instructor/TeacherDashboard';
 import TeacherSubmissions from './pages/instructor/TeacherSubmissions';
+import TeacherAnalytics from './pages/instructor/TeacherAnalytics';
 
 // Exam System Pages
 import ExamCoordinatorDashboard from './pages/examination_system/ExamCoordinatorDashboard';
 import UploadSubmissions from './pages/examination_system/UploadSubmissions';
+import BulkUpload from './pages/examination_system/BulkUpload';
+import PipelineMonitor from './pages/examination_system/PipelineMonitor';
 
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -97,6 +100,11 @@ const AppRoutes = () => {
                             <TeacherDashboard />
                         </ProtectedRoute>
                     } />
+                    <Route path="instructor/analytics" element={
+                        <ProtectedRoute allowedRoles={['teacher']}>
+                            <TeacherAnalytics />
+                        </ProtectedRoute>
+                    } />
 
                     {/* Student Routes */}
                     <Route path="student/dashboard" element={
@@ -124,6 +132,16 @@ const AppRoutes = () => {
                     <Route path="examination_system/uploads" element={
                         <ProtectedRoute allowedRoles={['examination_system']}>
                             <UploadSubmissions />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="examination_system/bulk-upload" element={
+                        <ProtectedRoute allowedRoles={['examination_system']}>
+                            <BulkUpload />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="examination_system/pipeline" element={
+                        <ProtectedRoute allowedRoles={['examination_system']}>
+                            <PipelineMonitor />
                         </ProtectedRoute>
                     } />
                     

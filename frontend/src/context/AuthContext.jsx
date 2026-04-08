@@ -9,8 +9,13 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         // Hydrate user from localStorage on initial load
         const storedUser = localStorage.getItem('user');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
+        if (storedUser && storedUser !== 'undefined' && token) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (error) {
+                console.error('Failed to parse user from local storage:', error);
+                localStorage.removeItem('user');
+            }
         }
 
         // Global Logout Listener for 401 Unauthorized API responses

@@ -111,6 +111,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
+const { structureAnswerKey } = require('../services/aiEvaluator');
+
 /**
  * POST /api/exams/:id/model-answer
  * Upload a model answer key PDF for an exam.
@@ -137,10 +139,18 @@ router.post('/:id/model-answer', authenticateToken, authorizeRoles('teacher'), u
         // Convert to relative path if desired, or keep absolute. We'll use relative for URL mapping.
         const relativePath = `uploads/${req.file.filename}`;
 
-        // Update the exam record with the model answer path
+        // Attempt to structure answer key with Gemini Vision
+        let structuredData = null;
+        try {
+            structuredData = await structureAnswerKey(relativePath);
+        } catch (aiErr) {
+            console.error('Failed to auto-structure answer key, falling back to manual entry:', aiErr.message);
+        }
+
+        // Update the exam record with the model answer path and structured data
         await db.query(
-            'UPDATE exams SET model_answer_path = $1 WHERE id = $2',
-            [relativePath, id]
+            'UPDATE exams SET model_answer_path = $1, model_answer_structured = $2 WHERE id = $3',
+            [relativePath, structuredData ? JSON.stringify(structuredData) : null, id]
         );
 
         res.status(200).json({ 

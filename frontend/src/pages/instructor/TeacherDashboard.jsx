@@ -80,22 +80,22 @@ const TeacherDashboard = () => {
             {isLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {[1,2,3,4,5,6].map(i => (
-                        <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 animate-pulse">
-                            <div className="h-10 w-10 bg-gray-100 rounded-xl mb-3"></div>
-                            <div className="h-3 bg-gray-100 rounded w-16 mb-2"></div>
-                            <div className="h-7 bg-gray-100 rounded w-12"></div>
+                        <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 animate-pulse transition-colors">
+                            <div className="h-10 w-10 bg-gray-100 dark:bg-slate-700 rounded-xl mb-3"></div>
+                            <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-16 mb-2"></div>
+                            <div className="h-7 bg-gray-100 dark:bg-slate-700 rounded w-12"></div>
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {metricsCards.map((metric, index) => (
-                        <div key={index} className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
-                            <div className={`p-2.5 rounded-xl ${metric.lightBg} ${metric.lightText} w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
+                        <div key={index} className="group bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default">
+                            <div className={`p-2.5 rounded-xl ${metric.lightBg} dark:bg-opacity-10 ${metric.lightText} w-fit mb-3 group-hover:scale-110 transition-transform duration-300`}>
                                 <metric.icon size={20} />
                             </div>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{metric.title}</p>
-                            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{metric.value}</h3>
+                            <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{metric.title}</p>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5">{metric.value}</h3>
                         </div>
                     ))}
                 </div>
@@ -103,7 +103,7 @@ const TeacherDashboard = () => {
 
             {/* Quick Actions */}
             <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <Zap size={18} className="text-amber-500" /> Teaching Workflow
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -111,16 +111,16 @@ const TeacherDashboard = () => {
                         <button
                             key={i}
                             onClick={() => navigate(action.path)}
-                            className="group relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-5 text-left hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                            className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 text-left hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
                             <div className="relative z-10">
-                                <div className="p-2.5 bg-gray-100 group-hover:bg-white/20 rounded-xl w-fit mb-3 transition-colors duration-300">
-                                    <action.icon size={20} className="text-gray-700 group-hover:text-white transition-colors duration-300" />
+                                <div className="p-2.5 bg-gray-100 dark:bg-slate-700 group-hover:bg-white/20 rounded-xl w-fit mb-3 transition-colors duration-300">
+                                    <action.icon size={20} className="text-gray-700 dark:text-gray-300 group-hover:text-white transition-colors duration-300" />
                                 </div>
-                                <h3 className="font-bold text-sm text-gray-900 group-hover:text-white transition-colors duration-300">{action.label}</h3>
-                                <p className="text-xs text-gray-500 group-hover:text-white/70 mt-1 transition-colors duration-300">{action.desc}</p>
-                                <ArrowRight size={14} className="mt-2 text-gray-300 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
+                                <h3 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-white transition-colors duration-300">{action.label}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-white/70 mt-1 transition-colors duration-300">{action.desc}</p>
+                                <ArrowRight size={14} className="mt-2 text-gray-300 dark:text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
                             </div>
                         </button>
                     ))}
@@ -129,31 +129,31 @@ const TeacherDashboard = () => {
 
             {/* Recent Evaluations Feed */}
             {stats?.recentEvaluations?.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/80 flex items-center justify-between">
+                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             <TrendingUp size={16} className="text-emerald-500" /> Recent AI Evaluations
                         </h3>
-                        <button onClick={() => navigate('/instructor/evaluations')} className="text-xs text-blue-600 font-semibold hover:underline">View All →</button>
+                        <button onClick={() => navigate('/instructor/evaluations')} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All →</button>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-gray-50 dark:divide-slate-700/50">
                         {stats.recentEvaluations.map((e, i) => (
-                            <div key={i} className="px-6 py-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                            <div key={i} className="px-6 py-3.5 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-slate-700/50 transition-colors">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                        e.confidence_flag ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
+                                        e.confidence_flag ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
                                     }`}>
                                         {e.confidence_flag ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{e.student_name}</p>
-                                        <p className="text-xs text-gray-400 truncate">{e.course_code} — {e.exam_name}</p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{e.student_name}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{e.course_code} — {e.exam_name}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 flex-shrink-0">
-                                    <span className="text-lg font-black text-gray-900">{e.total_score}</span>
+                                    <span className="text-lg font-black text-gray-900 dark:text-white">{e.total_score}</span>
                                     {e.confidence_flag && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-700">Review</span>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">Review</span>
                                     )}
                                 </div>
                             </div>

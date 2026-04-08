@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, GraduationCap, CheckCircle, Clock, FileText } from 'lucide-react';
+import { LogOut, GraduationCap, CheckCircle, Clock, FileText, TrendingUp } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
 import FeedbackViewer from '../components/student/FeedbackViewer';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const StudentDashboard = () => {
     const { user, logout } = useContext(AuthContext);
@@ -80,8 +81,29 @@ const StudentDashboard = () => {
                     />
                 ) : (
                     <>
+                        {/* Performance Chart Section */}
+                        {exams.some(e => e.status === 'graded') && (
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 h-80">
+                                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <TrendingUp className="text-emerald-500" size={20} />
+                                    Performance Trend
+                                </h3>
+                                <ResponsiveContainer width="100%" height="80%">
+                                    <LineChart data={[...exams].reverse().filter(e => e.status === 'graded').map(e => ({ name: e.courseCode, score: parseFloat(e.totalScore) }))}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dx={-10} domain={[0, 100]} />
+                                        <Tooltip 
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-800">My Submissions</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">Results</h2>
                             <p className="text-gray-500 mt-1">Review your uploaded scripts and AI evaluation results.</p>
                         </div>
 
