@@ -23,12 +23,12 @@ router.post('/users', async (req, res) => {
         return res.status(400).json({ error: 'email, password, full_name, and role are required.' });
     }
 
-    const validRoles = ['administrator', 'examination_system', 'teacher', 'student'];
+    const validRoles = ['administrator', 'Exam Cell', 'Faculty', 'student'];
     if (!validRoles.includes(role)) {
         return res.status(400).json({ error: 'Invalid role. Must be one of: ' + validRoles.join(', ') });
     }
 
-    const client = await db.pool.connect();
+    const client = await db.getClient();
     try {
         await client.query('BEGIN');
 
@@ -159,8 +159,8 @@ router.put('/users/:id/reset-password', async (req, res) => {
     const { id } = req.params;
     const { new_password } = req.body;
 
-    if (!new_password || new_password.length < 6) {
-        return res.status(400).json({ error: 'new_password is required and must be at least 6 characters.' });
+    if (!new_password || new_password.length < 8) {
+        return res.status(400).json({ error: 'new_password is required and must be at least 8 characters.' });
     }
 
     try {

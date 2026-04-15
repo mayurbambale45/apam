@@ -32,8 +32,8 @@ DROP TYPE IF EXISTS user_role CASCADE;
 -- Create an ENUM type for user roles to ensure data integrity
 CREATE TYPE user_role AS ENUM (
     'administrator', 
-    'examination_system', 
-    'teacher', 
+    'Exam Cell', 
+    'Faculty', 
     'student'
 );
 
@@ -212,27 +212,31 @@ BEGIN
         ('admin@walchandsangli.ac.in', pwd_hash, 'Dr. R. K. Jain', 'administrator')
     RETURNING id INTO admin_id;
 
+    -- NOTE: The examcell password is 'examcell'. The backend initSystem() will
+    -- automatically re-hash it to 'examcell' (bcrypt) on every startup.
+    -- The admin password is 'password123'.
+    -- faculty/student passwords in seed are also 'password123'.
     INSERT INTO users (email, password_hash, full_name, role) VALUES
-        ('examcell@walchandsangli.ac.in', pwd_hash, 'Prof. S. M. Patil', 'examination_system')
+        ('examcell', pwd_hash, 'APAM Exam Cell', 'Exam Cell')
     RETURNING id INTO coordinator_id;
 
     -- ==========================================
     -- USERS: Faculty (Teachers across departments)
     -- ==========================================
     INSERT INTO users (email, password_hash, full_name, role) VALUES
-        ('a.deshpande@walchandsangli.ac.in', pwd_hash, 'Prof. A. V. Deshpande', 'teacher')
+        ('avdeshpande', pwd_hash, 'Prof. A. V. Deshpande', 'Faculty')
     RETURNING id INTO t_cse_id;
 
     INSERT INTO users (email, password_hash, full_name, role) VALUES
-        ('s.kulkarni@walchandsangli.ac.in', pwd_hash, 'Prof. S. R. Kulkarni', 'teacher')
+        ('srkulkarni', pwd_hash, 'Prof. S. R. Kulkarni', 'Faculty')
     RETURNING id INTO t_it_id;
 
     INSERT INTO users (email, password_hash, full_name, role) VALUES
-        ('p.joshi@walchandsangli.ac.in', pwd_hash, 'Prof. P. D. Joshi', 'teacher')
+        ('pdjoshi', pwd_hash, 'Prof. P. D. Joshi', 'Faculty')
     RETURNING id INTO t_entc_id;
 
     INSERT INTO users (email, password_hash, full_name, role) VALUES
-        ('v.bhosale@walchandsangli.ac.in', pwd_hash, 'Prof. V. S. Bhosale', 'teacher')
+        ('vsbhosale', pwd_hash, 'Prof. V. S. Bhosale', 'Faculty')
     RETURNING id INTO t_mech_id;
 
     -- ==========================================
@@ -301,20 +305,20 @@ BEGIN
     -- Branch Codes: 027=CSE, 044=E&TC, 037=EE, 066=Mech, 012=Civil, 004=AI&DS
     -- ==========================================
     INSERT INTO students_profile (user_id, roll_number, prn_number, department, year) VALUES
-        (s_cse1,   'CSE-301',  '2022027001', 'Computer Science & Engineering',       'TE'),
-        (s_cse2,   'CSE-302',  '2022027002', 'Computer Science & Engineering',       'TE'),
-        (s_it1,    'IT-301',   '2022027003', 'Information Technology',               'TE'),
-        (s_it2,    'IT-302',   '2022027004', 'Information Technology',               'TE'),
-        (s_entc1,  'ENTC-301', '2022044001', 'Electronics & Telecommunication',      'TE'),
-        (s_entc2,  'ENTC-302', '2022044002', 'Electronics & Telecommunication',      'TE'),
-        (s_ee1,    'EE-301',   '2022037001', 'Electrical Engineering',               'TE'),
-        (s_ee2,    'EE-302',   '2022037002', 'Electrical Engineering',               'TE'),
-        (s_mech1,  'MECH-301', '2022066001', 'Mechanical Engineering',               'TE'),
-        (s_mech2,  'MECH-302', '2022066002', 'Mechanical Engineering',               'TE'),
-        (s_civil1, 'CE-301',   '2022012001', 'Civil Engineering',                    'TE'),
-        (s_civil2, 'CE-302',   '2022012002', 'Civil Engineering',                    'TE'),
-        (s_aids1,  'AIDS-301', '2022004001', 'Artificial Intelligence & Data Science','TE'),
-        (s_aids2,  'AIDS-302', '2022004002', 'Artificial Intelligence & Data Science','TE');
+        (s_cse1,   'CSE-301',  '2022027001', 'Computer Science & Engineering',       'TY'),
+        (s_cse2,   'CSE-302',  '2022027002', 'Computer Science & Engineering',       'TY'),
+        (s_it1,    'IT-301',   '2022027003', 'Information Technology',               'TY'),
+        (s_it2,    'IT-302',   '2022027004', 'Information Technology',               'TY'),
+        (s_entc1,  'ENTC-301', '2022044001', 'Electronics & Telecommunication',      'TY'),
+        (s_entc2,  'ENTC-302', '2022044002', 'Electronics & Telecommunication',      'TY'),
+        (s_ee1,    'EE-301',   '2022037001', 'Electrical Engineering',               'TY'),
+        (s_ee2,    'EE-302',   '2022037002', 'Electrical Engineering',               'TY'),
+        (s_mech1,  'MECH-301', '2022066001', 'Mechanical Engineering',               'TY'),
+        (s_mech2,  'MECH-302', '2022066002', 'Mechanical Engineering',               'TY'),
+        (s_civil1, 'CE-301',   '2022012001', 'Civil Engineering',                    'TY'),
+        (s_civil2, 'CE-302',   '2022012002', 'Civil Engineering',                    'TY'),
+        (s_aids1,  'AIDS-301', '2022004001', 'Artificial Intelligence & Data Science','TY'),
+        (s_aids2,  'AIDS-302', '2022004002', 'Artificial Intelligence & Data Science','TY');
 
     -- ==========================================
     -- EXAMS: Sample Course Papers (multi-department)

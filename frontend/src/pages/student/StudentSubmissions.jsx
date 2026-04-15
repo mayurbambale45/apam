@@ -72,11 +72,11 @@ const StudentSubmissions = () => {
         return (
             <div className="max-w-5xl mx-auto space-y-6">
                 <button onClick={handleCloseFeedback}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors shadow-sm">
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl text-sm font-medium transition-colors shadow-sm">
                     <ChevronLeft size={16} /> Back to Results
                 </button>
 
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
                     {/* Exam Header */}
                     <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 md:p-8">
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -118,25 +118,25 @@ const StudentSubmissions = () => {
             {/* Stats Bar */}
             {!isLoading && exams.length > 0 && (
                 <div className="flex flex-wrap gap-3">
-                    <div className="bg-white border border-gray-200 px-5 py-3 rounded-2xl flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><FileText size={16} /></div>
+                    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-5 py-3 rounded-2xl flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg"><FileText size={16} /></div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total</p>
-                            <p className="text-lg font-black text-gray-900">{exams.length}</p>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Total</p>
+                            <p className="text-lg font-black text-gray-900 dark:text-white">{exams.length}</p>
                         </div>
                     </div>
-                    <div className="bg-white border border-gray-200 px-5 py-3 rounded-2xl flex items-center gap-3">
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><CheckCircle2 size={16} /></div>
+                    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-5 py-3 rounded-2xl flex items-center gap-3">
+                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg"><CheckCircle2 size={16} /></div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Graded</p>
-                            <p className="text-lg font-black text-gray-900">{gradedCount}</p>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Graded</p>
+                            <p className="text-lg font-black text-gray-900 dark:text-white">{gradedCount}</p>
                         </div>
                     </div>
-                    <div className="bg-white border border-gray-200 px-5 py-3 rounded-2xl flex items-center gap-3">
-                        <div className="p-2 bg-amber-50 text-amber-600 rounded-lg"><Clock size={16} /></div>
+                    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-5 py-3 rounded-2xl flex items-center gap-3">
+                        <div className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg"><Clock size={16} /></div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pending</p>
-                            <p className="text-lg font-black text-gray-900">{pendingCount}</p>
+                            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Pending</p>
+                            <p className="text-lg font-black text-gray-900 dark:text-white">{pendingCount}</p>
                         </div>
                     </div>
                 </div>

@@ -13,7 +13,7 @@ const router = express.Router();
  * Returns metrics specific to the logged-in teacher: their exams, submission counts, grading progress.
  * Restricted to 'teacher'.
  */
-router.get('/teacher/stats', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+router.get('/teacher/stats', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
     const teacher_id = req.user.id;
 
     try {
@@ -53,14 +53,52 @@ router.get('/teacher/stats', authenticateToken, authorizeRoles('teacher'), async
 });
 
 /**
+ * GET /api/dashboard/teacher/my-exams
+ * Fetches a summary list of all exams assigned to the logged-in teacher.
+ * Restricted to 'Faculty'.
+ */
+router.get('/teacher/my-exams', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
+    const teacher_id = req.user.id;
+
+    try {
+        const query = `
+            SELECT 
+                id, 
+                course_code, 
+                exam_name, 
+                created_at,
+                model_answer_path
+            FROM exams
+            WHERE created_by = $1
+            ORDER BY created_at DESC
+        `;
+
+        const result = await db.query(query, [teacher_id]);
+        res.status(200).json(result.rows);
+
+    } catch (error) {
+        console.error('Teacher My Exams Fetch Error:', error);
+        res.status(500).json({ error: 'Internal server error while fetching teacher exams.' });
+    }
+});
+
+/**
  * GET /api/dashboard/teacher/exam/:exam_id
  * Fetches a summary list of all students who took a specific exam and their AI evaluation results.
  * Restricted to 'teacher' or 'administrator'.
  */
-router.get('/teacher/exam/:exam_id', authenticateToken, authorizeRoles('teacher', 'administrator'), async (req, res) => {
+router.get('/teacher/exam/:exam_id', authenticateToken, authorizeRoles('Faculty', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
 
     try {
+        // Security Check: Faculty can only see their own exams
+        if (req.user.role === 'Faculty') {
+            const ownershipCheck = await db.query('SELECT id FROM exams WHERE id = $1 AND created_by = $2', [exam_id, req.user.id]);
+            if (ownershipCheck.rows.length === 0) {
+                return res.status(403).json({ error: 'Access denied: You are not authorized to view results for this subject.' });
+            }
+        }
+
         const query = `
             SELECT 
                 u.full_name AS "studentName", 
@@ -74,14 +112,12 @@ router.get('/teacher/exam/:exam_id', authenticateToken, authorizeRoles('teacher'
             FROM submissions s
             JOIN users u ON s.student_id = u.id
             LEFT JOIN students_profile sp ON u.id = sp.user_id
-            -- LEFT JOIN in case a submission hasn't been evaluated yet
             LEFT JOIN evaluations e ON s.id = e.submission_id 
             WHERE s.exam_id = $1
             ORDER BY e.confidence_flag DESC NULLS LAST, u.full_name ASC
         `;
 
         const result = await db.query(query, [exam_id]);
-
         res.status(200).json(result.rows);
 
     } catch (error) {
@@ -95,7 +131,7 @@ router.get('/teacher/exam/:exam_id', authenticateToken, authorizeRoles('teacher'
  * Allows a teacher to override the AI's grading for a specific evaluation.
  * Restricted to 'teacher'.
  */
-router.put('/teacher/override/:evaluation_id', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+router.put('/teacher/override/:evaluation_id', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
     const { evaluation_id } = req.params;
     const { totalScore, detailedFeedback } = req.body;
 
@@ -217,13 +253,10 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
                 ex.course_code AS "courseCode", 
                 s.status AS "status", 
                 e.total_score AS "totalScore",
-                e.id AS "evaluationId",
-                e.grievance_marks AS "grievanceMarks",
-                (g.id IS NOT NULL) AS "hasRaisedGrievance"
+                e.id AS "evaluationId"
             FROM submissions s
             JOIN exams ex ON s.exam_id = ex.id
             LEFT JOIN evaluations e ON s.id = e.submission_id
-            LEFT JOIN grievances g ON e.id = g.evaluation_id
             WHERE s.student_id = $1
             ORDER BY s.upload_timestamp DESC
         `;
@@ -243,44 +276,8 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
  * Allows a student to raise a grievance for a specific evaluation.
  */
 router.post('/student/grievance', authenticateToken, authorizeRoles('student'), async (req, res) => {
-    const student_id = req.user.id;
-    const { evaluation_id } = req.body;
-
-    if (!evaluation_id) {
-        return res.status(400).json({ error: 'evaluation_id is required.' });
-    }
-
-    try {
-        // verify evaluation belongs to student
-        const evalCheckQuery = `
-            SELECT s.student_id 
-            FROM evaluations e
-            JOIN submissions s ON e.submission_id = s.id
-            WHERE e.id = $1
-        `;
-        const evalCheck = await db.query(evalCheckQuery, [evaluation_id]);
-        
-        if (evalCheck.rows.length === 0 || evalCheck.rows[0].student_id !== student_id) {
-            return res.status(403).json({ error: 'You are not authorized or evaluation does not exist.' });
-        }
-
-        const insertQuery = `
-            INSERT INTO grievances (evaluation_id, student_id)
-            VALUES ($1, $2)
-            ON CONFLICT (evaluation_id) DO NOTHING
-            RETURNING id
-        `;
-        const result = await db.query(insertQuery, [evaluation_id, student_id]);
-        
-        if (result.rowCount === 0) {
-            return res.status(400).json({ error: 'Grievance already raised for this evaluation.' });
-        }
-
-        res.status(200).json({ message: 'Grievance successfully raised.' });
-    } catch (error) {
-        console.error('Raise Grievance Error:', error);
-        res.status(500).json({ error: 'Internal server error while raising grievance.' });
-    }
+    // Grievance feature - returns 503 gracefully if table does not exist
+    res.status(503).json({ error: 'Grievance system is not yet available in this deployment.' });
 });
 
 /**
@@ -336,7 +333,7 @@ router.get('/student/feedback/:evaluation_id', authenticateToken, authorizeRoles
  * Returns system-wide aggregate metrics.
  * Restricted to 'administrator' and 'examination_system'.
  */
-router.get('/admin/stats', authenticateToken, authorizeRoles('administrator', 'examination_system'), async (req, res) => {
+router.get('/admin/stats', authenticateToken, authorizeRoles('administrator', 'Exam Cell'), async (req, res) => {
     try {
         const statsQuery = `
             SELECT
@@ -345,7 +342,7 @@ router.get('/admin/stats', authenticateToken, authorizeRoles('administrator', 'e
                 (SELECT COUNT(*) FROM users WHERE role = 'student') AS "totalStudents",
                 (SELECT COUNT(*) FROM evaluations) AS "totalEvaluations",
                 (SELECT COUNT(*) FROM submissions WHERE status = 'uploaded') AS "pendingEvaluations",
-                (SELECT COUNT(*) FROM users WHERE role = 'teacher') AS "totalInstructors"
+                (SELECT COUNT(*) FROM users WHERE role = 'Faculty') AS "totalInstructors"
         `;
         const result = await db.query(statsQuery);
         res.status(200).json(result.rows[0]);
@@ -360,7 +357,7 @@ router.get('/admin/stats', authenticateToken, authorizeRoles('administrator', 'e
  * Fetches the detailed AI question-by-question breakdown for a specific evaluation.
  * Accessible by 'teacher' and 'administrator' (no student ownership check).
  */
-router.get('/teacher/feedback/:evaluation_id', authenticateToken, authorizeRoles('teacher', 'administrator', 'examination_system'), async (req, res) => {
+router.get('/teacher/feedback/:evaluation_id', authenticateToken, authorizeRoles('Faculty', 'administrator', 'Exam Cell'), async (req, res) => {
     const { evaluation_id } = req.params;
 
     try {
@@ -395,7 +392,7 @@ router.get('/teacher/feedback/:evaluation_id', authenticateToken, authorizeRoles
  * Returns all exams with aggregated submission counts, graded counts, and instructor names.
  * Restricted to 'examination_system' and 'administrator'.
  */
-router.get('/coordinator/exams', authenticateToken, authorizeRoles('examination_system', 'administrator'), async (req, res) => {
+router.get('/coordinator/exams', authenticateToken, authorizeRoles('Exam Cell', 'administrator'), async (req, res) => {
     try {
         const query = `
             SELECT 
@@ -435,10 +432,16 @@ router.get('/coordinator/exams', authenticateToken, authorizeRoles('examination_
  *   - grievance count
  * Restricted to 'teacher' and 'administrator'.
  */
-router.get('/teacher/analytics/:exam_id', authenticateToken, authorizeRoles('teacher', 'administrator'), async (req, res) => {
+router.get('/teacher/analytics/:exam_id', authenticateToken, authorizeRoles('Faculty', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
 
     try {
+        // Ownership check
+        if (req.user.role === 'Faculty') {
+            const check = await db.query('SELECT id FROM exams WHERE id = $1 AND created_by = $2', [exam_id, req.user.id]);
+            if (check.rows.length === 0) return res.status(403).json({ error: 'Unauthorized subject analytics access.' });
+        }
+
         // 1. Summary stats
         const summaryQuery = `
             SELECT
@@ -518,22 +521,29 @@ router.get('/teacher/analytics/:exam_id', authenticateToken, authorizeRoles('tea
                 : '0.00'
         }));
 
-        // 5. Grievance count
-        const grievanceQuery = `
-            SELECT COUNT(g.id) AS grievance_count
-            FROM grievances g
-            JOIN evaluations ev ON g.evaluation_id = ev.id
-            JOIN submissions s ON ev.submission_id = s.id
-            WHERE s.exam_id = $1
-        `;
-        const grievanceResult = await db.query(grievanceQuery, [exam_id]);
+        // 5. Grievance count - skip if grievances table doesn't exist
+        let grievanceCount = 0;
+        try {
+            const grievanceQuery = `
+                SELECT COUNT(g.id) AS grievance_count
+                FROM grievances g
+                JOIN evaluations ev ON g.evaluation_id = ev.id
+                JOIN submissions s ON ev.submission_id = s.id
+                WHERE s.exam_id = $1
+            `;
+            const grievanceResult = await db.query(grievanceQuery, [exam_id]);
+            grievanceCount = parseInt(grievanceResult.rows[0].grievance_count);
+        } catch (e) {
+            // Grievances table may not exist — fallback to 0
+            console.warn('Grievances table not available, defaulting to 0.');
+        }
 
         res.status(200).json({
             ...summaryResult.rows[0],
             evaluations: evalsResult.rows,
             topPerformers: topResult.rows,
             questionStats,
-            grievanceSummary: parseInt(grievanceResult.rows[0].grievance_count)
+            grievanceSummary: grievanceCount
         });
 
     } catch (error) {

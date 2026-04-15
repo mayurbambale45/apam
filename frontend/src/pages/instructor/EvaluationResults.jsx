@@ -141,8 +141,8 @@ const EvaluationResults = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-6 relative">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Review Evaluations</h2>
-                <p className="text-gray-500 mt-2">Analyze AI-generated grades, review flagged submissions, and override grades.</p>
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Review Evaluations</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">Analyze AI-generated grades, review flagged submissions, and override grades.</p>
             </div>
 
             {/* View Layer: Split layout */}
@@ -150,11 +150,11 @@ const EvaluationResults = () => {
                 
                 {/* Left Column: Search & Table */}
                 <div className={`flex-1 transition-all duration-300 ${selectedEvaluationId ? 'xl:w-1/2' : 'w-full'}`}>
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden mb-6 transition-colors">
                         
                         {/* Search Header */}
-                        <div className="p-6 border-b border-gray-200 bg-gray-50/50">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Select Exam</label>
+                        <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/80">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Select Exam</label>
                             <div className="flex gap-4 max-w-xl">
                                 {isLoadingExams ? (
                                     <div className="text-gray-400 text-sm py-2">Loading exams...</div>
@@ -162,11 +162,11 @@ const EvaluationResults = () => {
                                     <select
                                         value={examId}
                                         onChange={(e) => { setExamId(e.target.value); handleSearch(e.target.value); }}
-                                        className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"
+                                        className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
                                     >
-                                        <option value="">— Select an Exam to Analyze —</option>
+                                        <option value="" className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">— Select an Exam to Analyze —</option>
                                         {exams.map(exam => (
-                                            <option key={exam.id} value={exam.id}>
+                                            <option key={exam.id} value={exam.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
                                                 #{exam.id} — {exam.course_code} — {exam.exam_name}
                                             </option>
                                         ))}
@@ -180,14 +180,14 @@ const EvaluationResults = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <tr className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
                                         <th className="px-6 py-4 font-semibold">Student</th>
                                         <th className="px-6 py-4 font-semibold text-center">Status</th>
                                         <th className="px-6 py-4 font-semibold text-center">Score</th>
                                         <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-gray-100 dark:divide-slate-700/50">
                                     {hasSearched && evaluations.length === 0 && !isFetching && !error && (
                                         <tr>
                                             <td colSpan="4" className="px-6 py-12 text-center text-gray-500 italic">
@@ -200,13 +200,13 @@ const EvaluationResults = () => {
                                         const needsReview = evalData.needsReview === true;
                                         const isSelected = selectedEvaluationId === evalData.evaluationId;
                                         const rowBg = isSelected 
-                                            ? 'bg-blue-50 border-l-4 border-blue-500' 
-                                            : needsReview ? 'bg-amber-50/40 hover:bg-amber-50' : 'hover:bg-gray-50 border-l-4 border-transparent';
+                                            ? 'bg-blue-50 dark:bg-slate-700 border-l-4 border-blue-500' 
+                                            : needsReview ? 'bg-amber-50/40 dark:bg-amber-900/10 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 border-l-4 border-transparent';
 
                                         return (
                                             <tr key={index} className={`transition-colors cursor-pointer ${rowBg}`} onClick={() => evalData.evaluationId && setSelectedEvaluationId(evalData.evaluationId)}>
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900 flex items-center gap-2">
+                                                    <div className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                                         {evalData.studentName}
                                                         {needsReview && (
                                                             <span title="AI flagged this paper for human review." className="text-amber-500">
@@ -219,11 +219,11 @@ const EvaluationResults = () => {
                                                 
                                                 <td className="px-6 py-4 text-center">
                                                     {evalData.submissionStatus === 'graded' ? (
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-800">
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">
                                                             Graded
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600">
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
                                                             Pending
                                                         </span>
                                                     )}
@@ -231,7 +231,7 @@ const EvaluationResults = () => {
                                                 
                                                 <td className="px-6 py-4 text-center">
                                                     {evalData.totalScore !== null ? (
-                                                        <span className={`text-lg font-bold ${needsReview ? 'text-amber-600' : 'text-gray-900'}`}>
+                                                        <span className={`text-lg font-bold ${needsReview ? 'text-amber-600 dark:text-amber-500' : 'text-gray-900 dark:text-gray-100'}`}>
                                                             {evalData.totalScore}
                                                         </span>
                                                     ) : (
@@ -284,27 +284,27 @@ const EvaluationResults = () => {
                             <div className="space-y-6 sticky top-8">
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                                        <p className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-1"><BarChart2 size={16}/> Average</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.avg}</p>
+                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1"><BarChart2 size={16}/> Average</p>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.avg}</p>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                                        <p className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-1">Graded</p>
-                                        <p className="text-3xl font-bold text-gray-900">{stats.count}</p>
+                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">Graded</p>
+                                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.count}</p>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                                        <p className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-1 text-green-600"><TrendingUp size={16}/> High</p>
-                                        <p className="text-2xl font-bold text-gray-900">{stats.high}</p>
+                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 text-green-600 dark:text-green-400"><TrendingUp size={16}/> High</p>
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.high}</p>
                                     </div>
-                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                                        <p className="text-sm font-semibold text-gray-500 mb-1 flex items-center gap-1 text-red-600"><TrendingDown size={16}/> Low</p>
-                                        <p className="text-2xl font-bold text-gray-900">{stats.low}</p>
+                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 text-red-600 dark:text-red-400"><TrendingDown size={16}/> Low</p>
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.low}</p>
                                     </div>
                                 </div>
 
                                 {/* Chart */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                                    <h3 className="text-sm font-bold text-gray-800 mb-6 uppercase tracking-wider">Score Distribution</h3>
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-6 uppercase tracking-wider">Score Distribution</h3>
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -328,16 +328,16 @@ const EvaluationResults = () => {
 
                         {/* Case 2: Show Drilldown if OPEN */}
                         {selectedEvaluationId && (
-                            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-full min-h-[600px] flex flex-col relative">
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 h-full min-h-[600px] flex flex-col relative transition-colors">
                                 {/* Modal Header */}
-                                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
-                                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/80 rounded-t-2xl">
+                                    <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                         <FileText className="text-blue-600" size={18} />
                                         Evaluation Details
                                     </h3>
                                     <button 
                                         onClick={() => setSelectedEvaluationId(null)}
-                                        className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors"
+                                        className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-200 dark:hover:text-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                     >
                                         <X size={20} />
                                     </button>
@@ -360,19 +360,19 @@ const EvaluationResults = () => {
             {/* ============================================== */}
             {overrideModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 relative transition-colors">
                         <button 
                             onClick={() => setOverrideModalOpen(false)}
-                            className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         >
                             <X size={20} />
                         </button>
 
-                        <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
                             <Edit3 className="text-orange-500" size={20} />
                             Override AI Grade
                         </h3>
-                        <p className="text-sm text-gray-500 mb-6">Manually adjust the score and provide optional feedback.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Manually adjust the score and provide optional feedback.</p>
 
                         {overrideStatus.message && (
                             <div className={`p-3 rounded-lg mb-4 text-sm font-medium ${overrideStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
@@ -382,24 +382,24 @@ const EvaluationResults = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">New Total Score *</label>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">New Total Score *</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     required
                                     value={overrideScore}
                                     onChange={(e) => setOverrideScore(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-lg"
+                                    className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-lg transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Override Justification <span className="font-normal text-gray-400">(Optional)</span></label>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Override Justification <span className="font-normal text-gray-400">(Optional)</span></label>
                                 <textarea
                                     rows="3"
                                     value={overrideFeedback}
                                     onChange={(e) => setOverrideFeedback(e.target.value)}
                                     placeholder="Reason for modifying the AI's grade..."
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none"
+                                    className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none transition-colors"
                                 />
                             </div>
                         </div>
@@ -407,7 +407,7 @@ const EvaluationResults = () => {
                         <div className="flex justify-end gap-3 mt-6">
                             <button
                                 onClick={() => setOverrideModalOpen(false)}
-                                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                                className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-colors"
                             >
                                 Cancel
                             </button>

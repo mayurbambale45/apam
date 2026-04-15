@@ -113,26 +113,26 @@ const UploadAnswerKey = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="mb-8 border-l-4 border-indigo-500 pl-4">
-                <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Upload Model Answer Key</h2>
-                <p className="text-gray-500 mt-2">Teachers: Upload your master model answer key (PDF) for your configured exams.</p>
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Upload Model Answer Key</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">Teachers: Upload your master model answer key (PDF) for your configured exams.</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 p-8">
                 
                 <div className="mb-8">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Target Exam</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Target Exam</label>
                     {isLoadingExams ? (
-                        <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 text-sm">Loading your exams...</div>
+                        <div className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-400 dark:text-gray-500 text-sm">Loading your exams...</div>
                     ) : (
                         <select
                             required
                             value={examId}
                             onChange={(e) => setExamId(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-indigo-500 transition-all"
                         >
-                            <option value="">Select an Exam...</option>
+                            <option value="" className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">Select an Exam...</option>
                             {exams.map(exam => (
-                                <option key={exam.id} value={exam.id}>
+                                <option key={exam.id} value={exam.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
                                     #{exam.id} — {exam.course_code} — {exam.exam_name} {exam.model_answer_path ? '(Key Uploaded)' : ''}
                                 </option>
                             ))}
@@ -148,8 +148,8 @@ const UploadAnswerKey = () => {
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                         relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center
-                        ${isDragging ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'}
-                        ${file ? 'bg-green-50/30 border-green-300' : ''}
+                        ${isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20' : 'border-gray-300 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-gray-50 dark:hover:bg-slate-700/50'}
+                        ${file ? 'bg-green-50/30 dark:bg-emerald-900/10 border-green-300 dark:border-emerald-700' : ''}
                     `}
                 >
                     <input 
@@ -165,22 +165,22 @@ const UploadAnswerKey = () => {
                             <div className="bg-green-100 p-4 rounded-full mb-4 text-green-600">
                                 <FileText size={32} />
                             </div>
-                            <h4 className="text-lg font-bold text-gray-900 truncate max-w-xs">{file.name}</h4>
-                            <p className="text-sm text-gray-500 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB PDF Document</p>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate max-w-xs">{file.name}</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB PDF Document</p>
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setFile(null); setStatus('idle'); }}
-                                className="mt-4 text-sm font-medium text-red-500 hover:text-red-700 py-1 px-3 rounded hover:bg-red-50"
+                                className="mt-4 text-sm font-medium text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 py-1 px-3 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
                             >
                                 Remove File
                             </button>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center pointer-events-none">
-                            <div className="bg-indigo-50 p-4 rounded-full mb-4 text-indigo-600">
+                            <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-full mb-4 text-indigo-600 dark:text-indigo-400">
                                 <UploadCloud size={32} />
                             </div>
-                            <h4 className="text-lg font-bold text-gray-900">Drag & drop Model Answer PDF</h4>
-                            <p className="text-sm text-gray-500 mt-2 max-w-sm">
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">Drag & drop Model Answer PDF</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-sm">
                                 Or click to browse files. Ensure the document is a scanned or typed PDF under 15MB.
                             </p>
                         </div>
@@ -201,7 +201,7 @@ const UploadAnswerKey = () => {
                     </div>
                 )}
 
-                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-700 flex justify-end">
                     <button
                         onClick={handleUpload}
                         disabled={!file || !examId || status === 'uploading'}

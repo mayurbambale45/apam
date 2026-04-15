@@ -54,7 +54,7 @@ function extractPrnFromFilename(filename) {
 //  Accepts multiple PDFs/images, auto-maps students via PRN in filename.
 //  Falls back to manual student_id mapping per file (JSON field).
 // ────────────────────────────────────────────────────────────────────────────
-router.post('/bulk-upload', authenticateToken, authorizeRoles('examination_system', 'teacher'), upload.array('files', 50), async (req, res) => {
+router.post('/bulk-upload', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), upload.array('files', 50), async (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded.' });
     }
@@ -65,10 +65,12 @@ router.post('/bulk-upload', authenticateToken, authorizeRoles('examination_syste
         return res.status(400).json({ error: 'exam_id is required.' });
     }
 
-    // Optional: client can provide a JSON mapping { original_filename: student_id }
+    // Primary: manual mapping from UI { "originalFilename": "student_id" }
     let manualMapping = {};
     try {
-        if (req.body.mapping) manualMapping = JSON.parse(req.body.mapping);
+        if (req.body.student_id_map) manualMapping = JSON.parse(req.body.student_id_map);
+        // Legacy support
+        else if (req.body.mapping) manualMapping = JSON.parse(req.body.mapping);
     } catch (_) {}
 
     const results = [];
@@ -77,11 +79,11 @@ router.post('/bulk-upload', authenticateToken, authorizeRoles('examination_syste
         const originalName = file.originalname;
         const relativePath = `uploads/${file.filename}`;
 
-        // 1. Try to find student_id
+        // 1. Use manual mapping first (selected from UI)
         let student_id = manualMapping[originalName] || null;
 
+        // 2. Fallback: try PRN extraction from filename
         if (!student_id) {
-            // Try PRN extraction from filename
             const prn = extractPrnFromFilename(originalName);
             if (prn) {
                 const studentRes = await db.query(
@@ -95,49 +97,53 @@ router.post('/bulk-upload', authenticateToken, authorizeRoles('examination_syste
         }
 
         if (!student_id) {
-            // Cannot map this file — record as orphan
             results.push({
                 filename: originalName,
                 status: 'failed',
-                reason: 'Could not resolve student from filename. Provide manual mapping.',
+                reason: 'No student assigned. Please select a student from the dropdown before uploading.',
                 savedAs: file.filename
             });
-            // Keep the file but don't insert into DB
             continue;
         }
 
         try {
-            // 2. Insert submission
-            const insertRes = await db.query(
-                `INSERT INTO submissions (exam_id, student_id, file_path, status, pipeline_status)
-                 VALUES ($1, $2, $3, 'uploaded', 'uploaded') RETURNING id`,
-                [exam_id, student_id, relativePath]
+            // Check if a submission already exists for this student+exam
+            const existing = await db.query(
+                `SELECT id FROM submissions WHERE exam_id = $1 AND student_id = $2`,
+                [exam_id, student_id]
             );
-            const submission_id = insertRes.rows[0].id;
 
-            await logPipeline(submission_id, 'upload', 'completed', `File: ${originalName}`);
+            let submission_id;
+            if (existing.rows.length > 0) {
+                // Update existing submission with the new file
+                submission_id = existing.rows[0].id;
+                await db.query(
+                    `UPDATE submissions SET file_path = $1, status = 'uploaded', pipeline_status = 'uploaded', extracted_text = NULL, error_message = NULL WHERE id = $2`,
+                    [relativePath, submission_id]
+                );
+                await logPipeline(submission_id, 'upload', 'completed', `Re-uploaded: ${originalName}`);
+            } else {
+                const insertRes = await db.query(
+                    `INSERT INTO submissions (exam_id, student_id, file_path, status, pipeline_status)
+                     VALUES ($1, $2, $3, 'uploaded', 'uploaded') RETURNING id`,
+                    [exam_id, student_id, relativePath]
+                );
+                submission_id = insertRes.rows[0].id;
+                await logPipeline(submission_id, 'upload', 'completed', `File: ${originalName}`);
+            }
 
-            results.push({
-                filename: originalName,
-                status: 'uploaded',
-                submission_id,
-                student_id
-            });
+            results.push({ filename: originalName, status: 'uploaded', submission_id, student_id });
         } catch (dbErr) {
             console.error('DB insert error:', dbErr.message);
-            results.push({
-                filename: originalName,
-                status: 'failed',
-                reason: dbErr.message
-            });
+            results.push({ filename: originalName, status: 'failed', reason: dbErr.message });
         }
     }
 
     const uploaded = results.filter(r => r.status === 'uploaded').length;
-    const failed = results.filter(r => r.status === 'failed').length;
+    const failed   = results.filter(r => r.status === 'failed').length;
 
     res.status(200).json({
-        message: `Bulk upload complete. ${uploaded} uploaded, ${failed} failed.`,
+        message: `Upload complete. ${uploaded} uploaded, ${failed} failed.`,
         total: req.files.length,
         uploaded,
         failed,
@@ -149,7 +155,7 @@ router.post('/bulk-upload', authenticateToken, authorizeRoles('examination_syste
 //  GET /api/pipeline/status/:exam_id
 //  Returns per-submission pipeline status for an exam.
 // ────────────────────────────────────────────────────────────────────────────
-router.get('/status/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher', 'administrator'), async (req, res) => {
+router.get('/status/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
 
     try {
@@ -200,37 +206,45 @@ router.get('/status/:exam_id', authenticateToken, authorizeRoles('examination_sy
 // ────────────────────────────────────────────────────────────────────────────
 const { extractTextFromVision, evaluateExtractedText } = require('../services/aiEvaluator');
 
-router.post('/run/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher'), async (req, res) => {
+router.post('/run/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
     const { exam_id } = req.params;
 
-    // Find pending submissions
-    const pendingRes = await db.query(
-        `SELECT id FROM submissions WHERE exam_id = $1 AND pipeline_status IN ('uploaded', 'failed') OR (pipeline_status = 'evaluating')`,
-        [exam_id]
-    );
+    try {
+        // ✅ FIXED: proper parentheses so exam_id filter applies to ALL conditions
+        const pendingRes = await db.query(
+            `SELECT id FROM submissions
+             WHERE exam_id = $1
+               AND pipeline_status IN ('uploaded', 'failed', 'evaluating')`,
+            [exam_id]
+        );
 
-    if (pendingRes.rows.length === 0) {
-        return res.status(200).json({ message: 'No pending submissions to evaluate.' });
+        if (pendingRes.rows.length === 0) {
+            return res.status(200).json({ message: 'No pending submissions to evaluate.' });
+        }
+
+        // Insert jobs into queue if no active job exists for that submission
+        for (const sub of pendingRes.rows) {
+            await db.query(`
+                INSERT INTO evaluation_jobs (submission_id, task_type, status)
+                SELECT $1, 'extract_and_evaluate', 'pending'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM evaluation_jobs
+                    WHERE submission_id = $1 AND status IN ('pending', 'processing')
+                )
+            `, [sub.id]);
+        }
+
+        res.status(202).json({
+            message: `Pipeline started for ${pendingRes.rows.length} submissions. Check /api/pipeline/status/${exam_id} for progress.`,
+            queued: pendingRes.rows.length
+        });
+
+        // Start background processor (no-op if already running)
+        processQueue();
+    } catch (err) {
+        console.error('Pipeline run error:', err.message);
+        res.status(500).json({ error: 'Failed to start pipeline.', detail: err.message });
     }
-
-    // Insert jobs into queue if they don't exist as pending
-    for (const sub of pendingRes.rows) {
-        await db.query(`
-            INSERT INTO evaluation_jobs (submission_id, task_type, status)
-            SELECT $1, 'extract_and_evaluate', 'pending'
-            WHERE NOT EXISTS (
-                SELECT 1 FROM evaluation_jobs WHERE submission_id = $1 AND status IN ('pending', 'processing')
-            )
-        `, [sub.id]);
-    }
-
-    res.status(202).json({
-        message: `Pipeline started for ${pendingRes.rows.length} submissions. Check /api/pipeline/status/${exam_id} for progress.`,
-        queued: pendingRes.rows.length
-    });
-
-    // Start background processor if not already running
-    processQueue();
 });
 
 // A simple in-memory flag to prevent concurrent overlapping worker loops in same thread
@@ -327,14 +341,29 @@ async function processQueue() {
                 await logPipeline(sid, 'evaluate', 'completed', `Score: ${total_score}`);
 
             } catch (err) {
-                console.error(`Job ID ${job.id} failed for submission ${sid}:`, err.message);
-                
+                // Surface the REAL error message (not a generic one)
+                const realError = err.message || String(err);
+                console.error(`[Pipeline] Job ${job.id} | Submission ${sid} FAILED:`, realError);
+
                 const failStatus = job.attempts >= job.max_attempts ? 'failed' : 'pending';
-                await db.query(`UPDATE evaluation_jobs SET status = $1, error_log = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`, [failStatus, err.message, job.id]);
-                
+                await db.query(
+                    `UPDATE evaluation_jobs SET status = $1, error_log = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
+                    [failStatus, realError, job.id]
+                );
+
                 if (failStatus === 'failed') {
-                    await db.query(`UPDATE submissions SET pipeline_status = 'failed', error_message = $1 WHERE id = $2`, [err.message, sid]);
-                    await logPipeline(sid, 'pipeline', 'failed', err.message);
+                    await db.query(
+                        `UPDATE submissions SET pipeline_status = 'failed', error_message = $1 WHERE id = $2`,
+                        [realError, sid]
+                    );
+                    await logPipeline(sid, 'pipeline', 'failed', realError);
+                } else {
+                    // Retry: reset submission status back to extracting so it can be picked up again
+                    await db.query(
+                        `UPDATE submissions SET pipeline_status = 'uploaded' WHERE id = $1`,
+                        [sid]
+                    );
+                    await logPipeline(sid, 'pipeline', 'retrying', `Attempt ${job.attempts}/${job.max_attempts}: ${realError}`);
                 }
             }
         }
@@ -347,11 +376,19 @@ async function processQueue() {
 //  POST /api/pipeline/publish/:exam_id
 //  Toggles results_published for an exam to make them visible to students.
 // ────────────────────────────────────────────────────────────────────────────
-router.post('/publish/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher', 'administrator'), async (req, res) => {
+router.post('/publish/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
-    const { publish } = req.body; // boolean
+    const { publish } = req.body;
 
     try {
+        // Faculty can only publish results for their own subjects
+        if (req.user.role === 'Faculty') {
+            const ownerCheck = await db.query('SELECT id FROM exams WHERE id = $1 AND created_by = $2', [exam_id, req.user.id]);
+            if (ownerCheck.rows.length === 0) {
+                return res.status(403).json({ error: 'Access denied: You can only publish results for your own subjects.' });
+            }
+        }
+
         await db.query(`UPDATE exams SET results_published = $1 WHERE id = $2`, [publish !== false, exam_id]);
         res.status(200).json({
             message: publish !== false ? 'Results published to students.' : 'Results unpublished.',
@@ -367,7 +404,7 @@ router.post('/publish/:exam_id', authenticateToken, authorizeRoles('examination_
 //  GET /api/pipeline/logs/:submission_id
 //  Fetch pipeline event logs for a specific submission.
 // ────────────────────────────────────────────────────────────────────────────
-router.get('/logs/:submission_id', authenticateToken, authorizeRoles('examination_system', 'teacher', 'administrator'), async (req, res) => {
+router.get('/logs/:submission_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty', 'administrator'), async (req, res) => {
     const { submission_id } = req.params;
     try {
         const result = await db.query(
@@ -381,26 +418,143 @@ router.get('/logs/:submission_id', authenticateToken, authorizeRoles('examinatio
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-//  GET /api/pipeline/students/:exam_id
-//  Returns list of students not yet mapped to a submission for this exam.
+//  GET /api/pipeline/all-students
+//  Returns ALL students with year+branch info for the upload selector UI.
+//  Optional query params: ?year=TE&branch=CSE
 // ────────────────────────────────────────────────────────────────────────────
-router.get('/students/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher'), async (req, res) => {
-    const { exam_id } = req.params;
+router.get('/all-students', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
+    const { year, branch } = req.query;
     try {
-        const query = `
-            SELECT u.id, u.full_name, sp.prn_number, sp.roll_number, sp.department
+        let queryText = `
+            SELECT u.id, u.full_name, sp.prn_number, sp.roll_number, sp.department, sp.year
             FROM users u
             JOIN students_profile sp ON u.id = sp.user_id
             WHERE u.role = 'student'
-              AND u.id NOT IN (
-                  SELECT student_id FROM submissions WHERE exam_id = $1
-              )
-            ORDER BY u.full_name ASC
+        `;
+        const params = [];
+        if (year) {
+            params.push(year);
+            queryText += ` AND sp.year = $${params.length}`;
+        }
+        if (branch) {
+            params.push(branch);
+            queryText += ` AND sp.department = $${params.length}`;
+        }
+        queryText += ` ORDER BY sp.roll_number ASC`;
+
+        const result = await db.query(queryText, params);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch students.' });
+    }
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+//  GET /api/pipeline/students/:exam_id
+//  Returns list of ALL students (with year+department) for an exam context.
+// ────────────────────────────────────────────────────────────────────────────
+router.get('/students/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
+    const { exam_id } = req.params;
+    try {
+        const query = `
+            SELECT u.id, u.full_name, sp.prn_number, sp.roll_number, sp.department, sp.year
+            FROM users u
+            JOIN students_profile sp ON u.id = sp.user_id
+            WHERE u.role = 'student'
+            ORDER BY sp.year ASC, sp.department ASC, sp.roll_number ASC
         `;
         const result = await db.query(query, [exam_id]);
         res.status(200).json(result.rows);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch unmapped students.' });
+    }
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+//  GET /api/pipeline/health
+//  Tests the Groq API connection and DB — useful for diagnosing issues.
+// ────────────────────────────────────────────────────────────────────────────
+router.get('/health', authenticateToken, authorizeRoles('Exam Cell', 'administrator'), async (req, res) => {
+    const results = {
+        groq:           'unknown',
+        database:       'unknown',
+        key_configured: !!process.env.GROQ_API_KEY
+    };
+
+    // Test DB
+    try {
+        await db.query('SELECT 1');
+        results.database = 'ok';
+    } catch (e) {
+        results.database = 'error: ' + e.message;
+    }
+
+    // Test Groq API with a trivial prompt
+    if (!process.env.GROQ_API_KEY) {
+        results.groq = 'error: GROQ_API_KEY not configured in .env';
+        results.groq_hint = 'Add GROQ_API_KEY=gsk_... to your .env file and restart the server.';
+    } else {
+        try {
+            const Groq = require('groq-sdk');
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const r = await groq.chat.completions.create({
+                model: 'llama-3.3-70b-versatile',
+                messages: [{ role: 'user', content: 'Reply with the single word: OK' }],
+                max_tokens: 5
+            });
+            const text = (r.choices?.[0]?.message?.content || '').trim();
+            results.groq = text ? 'ok' : 'warning: empty response';
+        } catch (e) {
+            const status = e.status || e.statusCode || '?';
+            results.groq = `error ${status}: ${(e.message || '').slice(0, 200)}`;
+            if (status === 429) {
+                results.groq_hint = 'API quota exceeded. Your free tier credits may be exhausted. Check https://console.groq.com';
+                results.quota_exceeded = true;
+            } else if (status === 401 || status === 403) {
+                results.groq_hint = 'Invalid or expired API key. Generate a new key at https://console.groq.com/keys';
+                results.invalid_key = true;
+            }
+        }
+    }
+
+    const allOk = results.groq === 'ok' && results.database === 'ok';
+    res.status(allOk ? 200 : 503).json(results);
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+//  POST /api/pipeline/reset-failed/:exam_id
+//  Resets all 'failed' submissions back to 'uploaded' so they can be retried.
+// ────────────────────────────────────────────────────────────────────────────
+router.post('/reset-failed/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
+    const { exam_id } = req.params;
+    try {
+        // Reset submission statuses
+        const subReset = await db.query(
+            `UPDATE submissions SET pipeline_status = 'uploaded', error_message = NULL, extracted_text = NULL
+             WHERE exam_id = $1 AND pipeline_status = 'failed'
+             RETURNING id`,
+            [exam_id]
+        );
+
+        const ids = subReset.rows.map(r => r.id);
+
+        // Cancel any stuck evaluation jobs for these submissions
+        if (ids.length > 0) {
+            await db.query(
+                `UPDATE evaluation_jobs SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+                 WHERE submission_id = ANY($1) AND status IN ('pending', 'processing', 'failed')`,
+                [ids]
+            );
+        }
+
+        res.status(200).json({
+            message: `Reset ${ids.length} failed submission(s) to 'uploaded'. You can now re-run the pipeline.`,
+            reset_count: ids.length,
+            submission_ids: ids
+        });
+    } catch (err) {
+        console.error('Reset-failed error:', err.message);
+        res.status(500).json({ error: 'Failed to reset submissions.', detail: err.message });
     }
 });
 

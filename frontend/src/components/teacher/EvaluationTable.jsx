@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
 import api from '../../utils/api';
 
@@ -8,6 +8,27 @@ const EvaluationTable = () => {
     const [isFetching, setIsFetching] = useState(false);
     const [error, setError] = useState(null);
     const [hasSearched, setHasSearched] = useState(false);
+    const [myExams, setMyExams] = useState([]);
+    const [isLoadingExams, setIsLoadingExams] = useState(true);
+
+    useEffect(() => {
+        const fetchMyExams = async () => {
+            try {
+                const response = await api.get('/api/dashboard/teacher/my-exams');
+                setMyExams(response.data);
+                if (response.data.length > 0) {
+                    setExamId(response.data[0].id.toString());
+                }
+            } catch (err) {
+                console.error('Failed to fetch assigned exams:', err);
+                setError('Failed to load your assigned subjects.');
+            } finally {
+                setIsLoadingExams(false);
+            }
+        };
+
+        fetchMyExams();
+    }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -41,14 +62,25 @@ const EvaluationTable = () => {
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Search size={18} className="text-gray-400" />
                             </div>
-                            <input
-                                type="number"
+                            <select
                                 required
                                 value={examId}
                                 onChange={(e) => setExamId(e.target.value)}
-                                placeholder="Enter Exam ID to view grades..."
-                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
+                                disabled={isLoadingExams || myExams.length === 0}
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                            >
+                                {isLoadingExams ? (
+                                    <option value="">Loading your subjects...</option>
+                                ) : myExams.length === 0 ? (
+                                    <option value="">No subjects assigned to you</option>
+                                ) : (
+                                    myExams.map(exam => (
+                                        <option key={exam.id} value={exam.id}>
+                                            {exam.course_code} - {exam.exam_name}
+                                        </option>
+                                    ))
+                                )}
+                            </select>
                         </div>
                         <button
                             type="submit"

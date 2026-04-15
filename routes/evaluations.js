@@ -58,7 +58,7 @@ async function runSingleEvaluation(submission_id) {
  * Evaluates a specified student submission using the core AI engine.
  * Restricted to 'examination_system' or 'teacher' roles.
  */
-router.post('/:submission_id', authenticateToken, authorizeRoles('examination_system', 'teacher'), async (req, res) => {
+router.post('/:submission_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
     const { submission_id } = req.params;
 
     try {
@@ -104,7 +104,7 @@ router.post('/:submission_id', authenticateToken, authorizeRoles('examination_sy
  * POST /api/evaluate/exam/:exam_id
  * Directs to the pipeline module
  */
-router.post('/exam/:exam_id', authenticateToken, authorizeRoles('examination_system', 'teacher'), async (req, res) => {
+router.post('/exam/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'Faculty'), async (req, res) => {
     // Deprecated in favor of /api/pipeline/run/:exam_id - redirecting call for backward compatibility
     res.redirect(307, `/api/pipeline/run/${req.params.exam_id}`);
 });
@@ -113,7 +113,7 @@ router.post('/exam/:exam_id', authenticateToken, authorizeRoles('examination_sys
  * POST /api/evaluate/re-evaluate/:submission_id
  * Deletes existing evaluation for a submission and re-runs the AI engine.
  */
-router.post('/re-evaluate/:submission_id', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+router.post('/re-evaluate/:submission_id', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
     const { submission_id } = req.params;
 
     try {

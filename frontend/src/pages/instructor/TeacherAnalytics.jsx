@@ -18,17 +18,17 @@ const StatCard = ({ icon: Icon, label, value, sub, color = 'blue', trend }) => {
         violet: 'bg-violet-50 text-violet-600',
     };
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex items-start gap-4 transition-colors">
             <div className={`p-3 rounded-xl flex-shrink-0 ${colorMap[color]}`}>
                 <Icon size={20} />
             </div>
             <div className="min-w-0">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</p>
-                <p className="text-2xl font-black text-gray-900 mt-0.5">{value ?? '—'}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-gray-100 mt-0.5">{value ?? '—'}</p>
                 {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
             </div>
             {trend !== undefined && (
-                <div className={`ml-auto flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${trend >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                <div className={`ml-auto flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${trend >= 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
                     {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                     {Math.abs(trend)}%
                 </div>
@@ -109,8 +109,8 @@ const TeacherAnalytics = () => {
             </div>
 
             {/* Exam Selector */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Select Exam to Analyze</label>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Select Exam to Analyze</label>
                 {isLoadingExams ? (
                     <div className="text-gray-400 text-sm flex items-center gap-2">
                         <Loader2 className="animate-spin" size={16} /> Loading exams...
@@ -120,11 +120,11 @@ const TeacherAnalytics = () => {
                         <select
                             value={selectedExamId}
                             onChange={e => { setSelectedExamId(e.target.value); fetchAnalytics(e.target.value); }}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 text-sm transition-all appearance-none pr-10"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-gray-100 text-sm transition-all appearance-none pr-10"
                         >
-                            <option value="">— Choose an exam —</option>
+                            <option value="" className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">— Choose an exam —</option>
                             {exams.map(exam => (
-                                <option key={exam.id} value={exam.id}>
+                                <option key={exam.id} value={exam.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
                                     #{exam.id} — {exam.course_code} — {exam.exam_name}
                                 </option>
                             ))}
@@ -162,8 +162,8 @@ const TeacherAnalytics = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Score Distribution Bar Chart */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
                                 <BarChart3 size={18} className="text-indigo-500" /> Score Distribution
                             </h3>
                             <p className="text-xs text-gray-400 mb-6">Number of students in each score band</p>
@@ -188,8 +188,8 @@ const TeacherAnalytics = () => {
                         </div>
 
                         {/* Top Performers */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
                                 <Award size={18} className="text-amber-500" /> Top Performers
                             </h3>
                             <p className="text-xs text-gray-400 mb-4">Top 5 students by total score</p>
@@ -200,16 +200,16 @@ const TeacherAnalytics = () => {
                                 {analyticsData.topPerformers?.map((s, i) => (
                                     <div key={i} className="flex items-center gap-3">
                                         <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${
-                                            i === 0 ? 'bg-amber-100 text-amber-700' :
-                                            i === 1 ? 'bg-gray-100 text-gray-600' :
-                                            i === 2 ? 'bg-orange-100 text-orange-700' :
-                                            'bg-gray-50 text-gray-500'
+                                            i === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                            i === 1 ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300' :
+                                            i === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                                            'bg-gray-50 text-gray-500 dark:bg-slate-700/50 dark:text-gray-400'
                                         }`}>{i + 1}</span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{s.student_name}</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{s.student_name}</p>
                                             <p className="text-xs text-gray-400 truncate">{s.department} · {s.prn_number}</p>
                                         </div>
-                                        <span className="text-lg font-black text-gray-900 flex-shrink-0">{s.total_score}</span>
+                                        <span className="text-lg font-black text-gray-900 dark:text-gray-100 flex-shrink-0">{s.total_score}</span>
                                     </div>
                                 ))}
                             </div>
@@ -218,15 +218,15 @@ const TeacherAnalytics = () => {
 
                     {/* Weak Questions */}
                     {analyticsData.questionStats?.length > 0 && (
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                            <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
                                 <Target size={18} className="text-red-500" /> Question-wise Performance
                             </h3>
                             <p className="text-xs text-gray-400 mb-5">Average score per question vs maximum marks. Low ratios indicate weak areas.</p>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                        <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-slate-700">
                                             <th className="pb-3 pr-6">Question</th>
                                             <th className="pb-3 pr-6 text-center">Max Marks</th>
                                             <th className="pb-3 pr-6 text-center">Avg Score</th>
@@ -234,23 +234,23 @@ const TeacherAnalytics = () => {
                                             <th className="pb-3 text-right">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
                                         {analyticsData.questionStats.map((q, i) => {
                                             const ratio = q.max_marks > 0 ? (q.avg_score / q.max_marks) * 100 : 0;
                                             const isWeak = ratio < 50;
                                             const barColor = ratio >= 75 ? 'bg-emerald-500' : ratio >= 50 ? 'bg-amber-400' : 'bg-red-500';
                                             return (
-                                                <tr key={i} className={`transition-colors ${isWeak ? 'bg-red-50/30' : ''}`}>
+                                                <tr key={i} className={`transition-colors ${isWeak ? 'bg-red-50/30 dark:bg-red-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-slate-750'}`}>
                                                     <td className="py-3 pr-6">
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg">
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg transition-colors">
                                                             Q{q.question_number}
                                                         </span>
                                                     </td>
-                                                    <td className="py-3 pr-6 text-center font-bold text-gray-700">{q.max_marks}</td>
-                                                    <td className="py-3 pr-6 text-center font-black text-gray-900">{parseFloat(q.avg_score).toFixed(1)}</td>
+                                                    <td className="py-3 pr-6 text-center font-bold text-gray-700 dark:text-gray-300">{q.max_marks}</td>
+                                                    <td className="py-3 pr-6 text-center font-black text-gray-900 dark:text-gray-100">{parseFloat(q.avg_score).toFixed(1)}</td>
                                                     <td className="py-3 pr-6">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-[120px]">
+                                                            <div className="flex-1 bg-gray-100 dark:bg-slate-700 rounded-full h-2 max-w-[120px]">
                                                                 <div className={`h-2 rounded-full ${barColor} transition-all duration-500`}
                                                                     style={{ width: `${Math.round(ratio)}%` }} />
                                                             </div>
@@ -279,13 +279,13 @@ const TeacherAnalytics = () => {
 
                     {/* Grievance Summary */}
                     {analyticsData.grievanceSummary !== undefined && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center gap-4">
-                            <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-5 flex items-center gap-4 transition-colors">
+                            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
                                 <AlertTriangle size={20} />
                             </div>
                             <div>
-                                <p className="font-bold text-amber-900">Grievances Raised: {analyticsData.grievanceSummary}</p>
-                                <p className="text-xs text-amber-700 mt-0.5">Students who disputed the AI evaluation results for this exam.</p>
+                                <p className="font-bold text-amber-900 dark:text-amber-500">Grievances Raised: {analyticsData.grievanceSummary}</p>
+                                <p className="text-xs text-amber-700 dark:text-amber-400/80 mt-0.5">Students who disputed the AI evaluation results for this exam.</p>
                             </div>
                         </div>
                     )}

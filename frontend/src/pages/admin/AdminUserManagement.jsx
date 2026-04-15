@@ -362,10 +362,10 @@ const AdminUserManagement = () => {
                                             <select required value={createForm.year} onChange={e => setCreateForm({...createForm, year: e.target.value})}
                                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white">
                                                 <option value="">Select Year</option>
-                                                <option value="FE">FE</option>
-                                                <option value="SE">SE</option>
-                                                <option value="TE">TE</option>
-                                                <option value="BE">BE</option>
+                                                <option value="FY">First Year (FY)</option>
+                                                <option value="SY">Second Year (SY)</option>
+                                                <option value="TY">Third Year (TY)</option>
+                                                <option value="LY">Last Year (LY)</option>
                                             </select>
                                         </div>
                                     </div>

@@ -82,18 +82,18 @@ const ManageExams = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Manage Exams</h2>
-                <p className="text-gray-500 mt-2">Create new examination sessions and trigger AI grading for bulk submissions.</p>
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Manage Exams</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">Create new examination sessions and trigger AI grading for bulk submissions.</p>
             </div>
 
             {/* Top Section: Split Layout for Form and Quick Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Create Exam Form */}
-                <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6 self-start">
+                <div className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 self-start transition-colors">
                     <div className="flex items-center gap-2 mb-6">
-                        <PlusCircle className="text-blue-600" size={20} />
-                        <h3 className="text-xl font-bold text-gray-800">New Exam</h3>
+                        <PlusCircle className="text-blue-600 dark:text-blue-400" size={20} />
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">New Exam</h3>
                     </div>
 
                     {createStatus.message && (
@@ -104,23 +104,23 @@ const ManageExams = () => {
 
                     <form onSubmit={handleCreateExam} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Course Code</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Course Code</label>
                             <input
                                 type="text"
                                 required
                                 placeholder="e.g. CS101"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 uppercase"
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 uppercase transition-colors"
                                 value={courseCode}
                                 onChange={(e) => setCourseCode(e.target.value.toUpperCase())}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Exam Title</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Exam Title</label>
                             <input
                                 type="text"
                                 required
                                 placeholder="e.g. Midterm Examination"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors"
                                 value={examName}
                                 onChange={(e) => setExamName(e.target.value)}
                             />
@@ -136,24 +136,24 @@ const ManageExams = () => {
                 </div>
 
                 {/* Exam Data Grid */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <h3 className="text-xl font-bold text-gray-800">Active Examinations</h3>
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors">
+                    <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Active Examinations</h3>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={16} />
                             <input 
                                 type="text" 
                                 placeholder="Search exams..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500"
+                                className="pl-9 pr-4 py-1.5 text-sm bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-full focus:ring-2 focus:ring-blue-500 transition-colors"
                             />
                         </div>
                     </div>
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                            <thead className="bg-gray-50 dark:bg-slate-800/80 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">ID</th>
                                     <th className="px-6 py-4 font-semibold">Course</th>
@@ -161,7 +161,7 @@ const ManageExams = () => {
                                     <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                                 {isFetching && exams.length === 0 ? (
                                     <tr>
                                         <td colSpan="4" className="px-6 py-8 text-center text-gray-500">Loading exams...</td>
@@ -175,16 +175,16 @@ const ManageExams = () => {
                                         String(exam.id).includes(q)
                                     );
                                 }).map((exam) => (
-                                    <tr key={exam.id} className="hover:bg-blue-50/50 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-mono text-gray-500">#{exam.id}</td>
+                                    <tr key={exam.id} className="hover:bg-blue-50/50 dark:hover:bg-slate-700/50 transition-colors group">
+                                        <td className="px-6 py-4 text-sm font-mono text-gray-500 dark:text-gray-400">#{exam.id}</td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-800 text-sm font-bold tracking-wide">
-                                                <BookOpen size={14} className="text-blue-500"/>
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 text-sm font-bold tracking-wide">
+                                                <BookOpen size={14} className="text-blue-500 dark:text-blue-400"/>
                                                 {exam.course_code || exam.courseCode}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-semibold text-gray-900">{exam.exam_name || exam.examName}</div>
+                                            <div className="font-semibold text-gray-900 dark:text-gray-100">{exam.exam_name || exam.examName}</div>
                                             <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                                                 <Calendar size={12} />
                                                 {new Date(exam.created_at).toLocaleDateString()}

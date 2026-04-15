@@ -10,7 +10,7 @@ const router = express.Router();
  * Restricted to the 'teacher' role.
  * Uses a PostgreSQL transaction to ensure data integrity.
  */
-router.post('/create', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+router.post('/create', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
     const { exam_id, questions } = req.body;
     const teacher_id = req.user.id;
 
@@ -24,11 +24,16 @@ router.post('/create', authenticateToken, authorizeRoles('teacher'), async (req,
     try {
         await client.query('BEGIN'); // Start transaction
 
-        // 1. Check if the exam exists
-        const examCheck = await client.query('SELECT id FROM exams WHERE id = $1', [exam_id]);
+        // 1. Check if the exam exists and belongs to this teacher
+        const examCheck = await client.query('SELECT id, created_by FROM exams WHERE id = $1', [exam_id]);
         if (examCheck.rows.length === 0) {
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Exam not found' });
+        }
+        
+        if (examCheck.rows[0].created_by !== teacher_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Unauthorized: You can only create rubrics for your own assigned subjects.' });
         }
 
         // 2. Insert the main rubric record
@@ -98,7 +103,7 @@ router.post('/create', authenticateToken, authorizeRoles('teacher'), async (req,
  * Fetches the rubric and all its associated questions for a specific exam.
  * Accessible to authenticated users (Teacher or Admin roles should typically be used, but keeping broad as requested by logic: Teacher or Admin).
  */
-router.get('/:exam_id', authenticateToken, authorizeRoles('teacher', 'administrator'), async (req, res) => {
+router.get('/:exam_id', authenticateToken, authorizeRoles('Faculty', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
 
     try {
@@ -115,6 +120,11 @@ router.get('/:exam_id', authenticateToken, authorizeRoles('teacher', 'administra
         }
 
         const rubric = rubricResult.rows[0];
+
+        // Security Check: Faculty can only see rubrics for their own exams
+        if (req.user.role === 'Faculty' && rubric.teacher_id !== req.user.id) {
+            return res.status(403).json({ error: 'Access denied: Unauthorized subject rubric access.' });
+        }
 
         // Query to get all associated questions for this rubric
         const questionsQuery = `
@@ -134,6 +144,43 @@ router.get('/:exam_id', authenticateToken, authorizeRoles('teacher', 'administra
     } catch (error) {
         console.error('Fetch Rubric Error:', error);
         res.status(500).json({ error: 'Internal server error while fetching rubric' });
+    }
+});
+
+const { structureAnswerKey } = require('../services/aiEvaluator');
+
+/**
+ * POST /api/rubrics/generate-auto/:exam_id
+ * Uses Gemini to automatically build a rubric from the uploaded model answer PDF.
+ */
+router.post('/generate-auto/:exam_id', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
+    const { exam_id } = req.params;
+
+    try {
+        const examRes = await db.query('SELECT model_answer_path FROM exams WHERE id = $1', [exam_id]);
+        if (examRes.rows.length === 0) return res.status(404).json({ error: 'Exam not found' });
+        
+        const { model_answer_path } = examRes.rows[0];
+        if (!model_answer_path) {
+            return res.status(400).json({ error: 'No model answer key uploaded for this exam. Upload one first.' });
+        }
+
+        const structuredRubric = await structureAnswerKey(model_answer_path);
+        
+        // Map common Gemini output names to our schema names if needed
+        const formatted = structuredRubric.map((q, idx) => ({
+            question_number: idx + 1,
+            question_text: q.question || '',
+            max_marks: 5, // Default, teacher can adjust
+            model_answer_text: q.model_answer || '',
+            mandatory_keywords: (q.keywords || []).join(', ')
+        }));
+
+        res.status(200).json(formatted);
+
+    } catch (error) {
+        console.error('Auto-Rubric Error:', error);
+        res.status(500).json({ error: 'AI failed to generate rubric. Ensure the PDF is clear or enter manually.' });
     }
 });
 

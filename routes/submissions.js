@@ -45,7 +45,7 @@ const upload = multer({
  * Handles student's PDF upload for an exam.
  * Requires JWT token, accessible by students or examination system staff.
  */
-router.post('/upload', authenticateToken, authorizeRoles('student', 'examination_system', 'teacher'), (req, res) => {
+router.post('/upload', authenticateToken, authorizeRoles('student', 'Exam Cell', 'Faculty'), (req, res) => {
     // Using multer middleware wrapped carefully to catch and respond to validation errors
     upload.single('file')(req, res, async (err) => {
         if (err instanceof multer.MulterError) {
@@ -102,7 +102,7 @@ router.post('/upload', authenticateToken, authorizeRoles('student', 'examination
  * Returns all submissions for a given exam with student details.
  * Restricted to 'teacher', 'examination_system', 'administrator'.
  */
-router.get('/exam/:exam_id', authenticateToken, authorizeRoles('teacher', 'examination_system', 'administrator'), async (req, res) => {
+router.get('/exam/:exam_id', authenticateToken, authorizeRoles('Faculty', 'Exam Cell', 'administrator'), async (req, res) => {
     const { exam_id } = req.params;
 
     try {

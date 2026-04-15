@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FilePlus, LogOut, CheckSquare, ClipboardList, Shield, Users, BookOpen, UploadCloud, FileText, BarChart3, PieChart, Activity, Layers, Sun, Moon } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
+import NotificationBell from '../NotificationBell';
 
 const DashboardLayout = () => {
     const { user, logout } = useContext(AuthContext);
@@ -28,7 +29,7 @@ const DashboardLayout = () => {
     const getNavigationLinks = () => {
         if (!user) return [];
 
-        if (user.role === 'teacher') {
+        if (user.role === 'Faculty') {
             return [
                 { name: 'Dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },
                 { name: 'Manage Exams', path: '/instructor/exams', icon: ClipboardList },
@@ -36,6 +37,7 @@ const DashboardLayout = () => {
                 { name: 'Configure Rubrics', path: '/instructor/rubrics', icon: CheckSquare },
                 { name: 'View Submissions', path: '/instructor/submissions', icon: FileText },
                 { name: 'Review Evaluations', path: '/instructor/evaluations', icon: BarChart3 },
+                { name: 'Pipeline Monitor', path: '/instructor/pipeline', icon: Activity },
                 { name: 'Analytics', path: '/instructor/analytics', icon: PieChart },
             ];
         } else if (user.role === 'student') {
@@ -52,7 +54,7 @@ const DashboardLayout = () => {
                 { name: 'Submissions', path: '/admin/submissions', icon: FileText },
                 { name: 'Evaluations', path: '/admin/evaluations', icon: BarChart3 },
             ];
-        } else if (user.role === 'examination_system') {
+        } else if (user.role === 'Exam Cell') {
             return [
                 { name: 'Dashboard', path: '/examination_system-dashboard', icon: LayoutDashboard },
                 { name: 'Upload Scripts', path: '/examination_system/uploads', icon: UploadCloud },
@@ -125,12 +127,15 @@ const DashboardLayout = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-                <header className="h-16 bg-white dark:bg-slate-800 shadow-sm flex justify-between items-center px-8 flex-shrink-0 z-10 border-b border-gray-200 dark:border-slate-700 transition-colors duration-300">
+                <header className="h-16 bg-white dark:bg-slate-800 shadow-sm flex justify-between items-center px-8 flex-shrink-0 z-50 border-b border-gray-200 dark:border-slate-700 transition-colors duration-300">
                     <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 capitalize tracking-tight">
                         {user?.role?.replace('_', ' ')} Portal
                     </h1>
                     
                     <div className="flex items-center gap-4">
+                        {(user?.role === 'student' || user?.role === 'Faculty') && (
+                            <NotificationBell />
+                        )}
                         <button 
                             onClick={() => setIsDarkMode(!isDarkMode)}
                             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"

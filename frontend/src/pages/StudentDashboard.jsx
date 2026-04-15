@@ -38,10 +38,10 @@ const StudentDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors">
             
             {/* Header */}
-            <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+            <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700 sticky top-0 z-10 transition-colors">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         
@@ -50,17 +50,17 @@ const StudentDashboard = () => {
                                 <GraduationCap size={20} />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900 leading-tight">Student Portal</h1>
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">Student Portal</h1>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-6">
                             <div className="hidden md:block text-right">
-                                <div className="text-sm font-semibold text-gray-900">{user?.full_name}</div>
+                                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.full_name}</div>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors bg-gray-100 hover:bg-red-50 px-3 py-1.5 rounded-md"
+                                className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors bg-gray-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-md"
                             >
                                 <LogOut size={16} />
                                 <span className="hidden sm:inline">Logout</span>
@@ -83,8 +83,8 @@ const StudentDashboard = () => {
                     <>
                         {/* Performance Chart Section */}
                         {exams.some(e => e.status === 'graded') && (
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 h-80">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 mb-8 h-80 transition-colors">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
                                     <TrendingUp className="text-emerald-500" size={20} />
                                     Performance Trend
                                 </h3>
@@ -103,8 +103,8 @@ const StudentDashboard = () => {
                         )}
 
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-800">Results</h2>
-                            <p className="text-gray-500 mt-1">Review your uploaded scripts and AI evaluation results.</p>
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Results</h2>
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">Review your uploaded scripts and AI evaluation results.</p>
                         </div>
 
                         {error && (
@@ -118,10 +118,10 @@ const StudentDashboard = () => {
                                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
                             </div>
                         ) : exams.length === 0 ? (
-                            <div className="bg-white p-12 text-center rounded-xl shadow-sm border border-gray-200">
-                                <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900">No Exams Found</h3>
-                                <p className="text-gray-500 mt-2">You haven't uploaded any answer scripts yet.</p>
+                            <div className="bg-white dark:bg-slate-800 p-12 text-center rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                                <FileText size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No Exams Found</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mt-2">You haven't uploaded any answer scripts yet.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -129,11 +129,11 @@ const StudentDashboard = () => {
                                     const isGraded = exam.status === 'graded';
 
                                     return (
-                                        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                                        <div key={index} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                                             
                                             <div className="p-6 flex-1">
                                                 <div className="flex justify-between items-start mb-4">
-                                                    <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full uppercase tracking-wider">
+                                                    <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-full uppercase tracking-wider">
                                                         {exam.courseCode}
                                                     </span>
                                                     {isGraded ? (
@@ -147,21 +147,21 @@ const StudentDashboard = () => {
                                                     )}
                                                 </div>
                                                 
-                                                <h3 className="text-xl font-bold text-gray-900 mb-2">{exam.examName}</h3>
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{exam.examName}</h3>
                                                 
                                                 {isGraded && (
-                                                    <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                                        <span className="text-gray-500 text-sm font-medium">Final Score</span>
-                                                        <span className="text-2xl font-bold text-gray-900">{exam.totalScore}</span>
+                                                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
+                                                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Final Score</span>
+                                                        <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{exam.totalScore}</span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="bg-gray-50 p-4 border-t border-gray-100">
+                                            <div className="bg-gray-50 dark:bg-slate-700/50 p-4 border-t border-gray-100 dark:border-slate-700">
                                                 {isGraded && exam.evaluationId ? (
                                                     <button
                                                         onClick={() => setSelectedEvaluationId(exam.evaluationId)}
-                                                        className="w-full relative inline-flex items-center justify-center gap-2 px-4 py-2 border border-green-600 text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                                        className="w-full relative inline-flex items-center justify-center gap-2 px-4 py-2 border border-green-600 text-sm font-medium rounded-md text-green-700 dark:text-green-400 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-green-500"
                                                     >
                                                         View Detailed Feedback
                                                     </button>

@@ -46,8 +46,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     }
 
     if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
-        // Redirect to a default dashboard if role is unauthorized for this route
-        return <Navigate to={`/${user.role}-dashboard`} replace />;
+        // Redirect to a specific dashboard based on role
+        let redirectPath = '/login';
+        if (user.role === 'administrator') redirectPath = '/administrator-dashboard';
+        else if (user.role === 'Exam Cell') redirectPath = '/examination_system-dashboard';
+        else if (user.role === 'Faculty') redirectPath = '/instructor/dashboard';
+        else if (user.role === 'student') redirectPath = '/student/dashboard';
+        
+        return <Navigate to={redirectPath} replace />;
     }
     
     return children;
@@ -71,38 +77,44 @@ const AppRoutes = () => {
                     
                     {/* Instructor Routes */}
                     <Route path="instructor/exams" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <ManageExams />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/answer-key" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <UploadAnswerKey />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/rubrics" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <InstructorRubrics />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/evaluations" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <EvaluationResults />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/submissions" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <TeacherSubmissions />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/dashboard" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <TeacherDashboard />
                         </ProtectedRoute>
                     } />
                     <Route path="instructor/analytics" element={
-                        <ProtectedRoute allowedRoles={['teacher']}>
+                        <ProtectedRoute allowedRoles={['Faculty']}>
                             <TeacherAnalytics />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="instructor/pipeline" element={
+                        <ProtectedRoute allowedRoles={['Faculty']}>
+                            <PipelineMonitor />
                         </ProtectedRoute>
                     } />
 
@@ -125,22 +137,22 @@ const AppRoutes = () => {
                     
                     {/* Exam Coordinator Routes */}
                     <Route path="examination_system-dashboard" element={
-                        <ProtectedRoute allowedRoles={['examination_system']}>
+                        <ProtectedRoute allowedRoles={['Exam Cell']}>
                             <ExamCoordinatorDashboard />
                         </ProtectedRoute>
                     } />
                     <Route path="examination_system/uploads" element={
-                        <ProtectedRoute allowedRoles={['examination_system']}>
+                        <ProtectedRoute allowedRoles={['Exam Cell']}>
                             <UploadSubmissions />
                         </ProtectedRoute>
                     } />
                     <Route path="examination_system/bulk-upload" element={
-                        <ProtectedRoute allowedRoles={['examination_system']}>
+                        <ProtectedRoute allowedRoles={['Exam Cell']}>
                             <BulkUpload />
                         </ProtectedRoute>
                     } />
                     <Route path="examination_system/pipeline" element={
-                        <ProtectedRoute allowedRoles={['examination_system']}>
+                        <ProtectedRoute allowedRoles={['Exam Cell']}>
                             <PipelineMonitor />
                         </ProtectedRoute>
                     } />
@@ -179,7 +191,7 @@ const AppRoutes = () => {
                     
                     {/* Default Dashboard Redirection Base */}
                     <Route index element={
-                        user ? <Navigate to={`/${user.role}-dashboard`} replace /> : <Navigate to="/login" replace />
+                        user ? <Navigate to={`/${user.role === 'Exam Cell' ? 'examination_system' : (user.role === 'Faculty' ? 'instructor/dashboard' : user.role + '-dashboard')}`} replace /> : <Navigate to="/login" replace />
                     } />
                 </Route>
 
