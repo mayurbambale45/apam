@@ -179,6 +179,112 @@ router.put('/teacher/override/:evaluation_id', authenticateToken, authorizeRoles
     }
 });
 
+/**
+ * GET /api/dashboard/teacher/grievances
+ * Returns all pending/resolved grievances for the logged-in teacher's exams.
+ * Restricted to 'Faculty'.
+ */
+router.get('/teacher/grievances', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
+    const teacher_id = req.user.id;
+    try {
+        const query = `
+            SELECT
+                g.id AS "grievanceId",
+                g.evaluation_id AS "evaluationId",
+                g.message,
+                g.status,
+                g.teacher_marks AS "teacherMarks",
+                g.teacher_note AS "teacherNote",
+                g.created_at AS "raisedAt",
+                g.resolved_at AS "resolvedAt",
+                u.full_name AS "studentName",
+                sp.prn_number AS "prnNumber",
+                sp.roll_number AS "rollNumber",
+                ex.exam_name AS "examName",
+                ex.course_code AS "courseCode",
+                ev.total_score AS "currentScore"
+            FROM grievances g
+            JOIN users u ON g.student_id = u.id
+            LEFT JOIN students_profile sp ON u.id = sp.user_id
+            JOIN evaluations ev ON g.evaluation_id = ev.id
+            JOIN submissions s ON ev.submission_id = s.id
+            JOIN exams ex ON s.exam_id = ex.id
+            WHERE ex.created_by = $1
+            ORDER BY g.created_at DESC
+        `;
+        const result = await db.query(query, [teacher_id]);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Teacher Grievances Fetch Error:', error);
+        res.status(500).json({ error: 'Internal server error while fetching grievances.' });
+    }
+});
+
+/**
+ * PUT /api/dashboard/teacher/grievance/:grievance_id/resolve
+ * Allows a teacher to resolve a grievance by updating marks on the evaluation.
+ * Restricted to 'Faculty'.
+ */
+router.put('/teacher/grievance/:grievance_id/resolve', authenticateToken, authorizeRoles('Faculty'), async (req, res) => {
+    const { grievance_id } = req.params;
+    const { newScore, teacherNote } = req.body;
+    const teacher_id = req.user.id;
+
+    if (newScore === undefined || newScore === null) {
+        return res.status(400).json({ error: 'newScore is required to resolve a grievance.' });
+    }
+
+    try {
+        // Fetch the grievance and verify it belongs to this teacher's exam
+        const grievanceCheck = await db.query(`
+            SELECT g.id, g.evaluation_id, g.status
+            FROM grievances g
+            JOIN evaluations ev ON g.evaluation_id = ev.id
+            JOIN submissions s ON ev.submission_id = s.id
+            JOIN exams ex ON s.exam_id = ex.id
+            WHERE g.id = $1 AND ex.created_by = $2
+        `, [grievance_id, teacher_id]);
+
+        if (grievanceCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Grievance not found or you are not authorized to resolve it.' });
+        }
+
+        const grievance = grievanceCheck.rows[0];
+        if (grievance.status === 'resolved') {
+            return res.status(409).json({ error: 'This grievance has already been resolved.' });
+        }
+
+        const evaluation_id = grievance.evaluation_id;
+        const scoreDiff = parseFloat(newScore);
+
+        // Update evaluation total_score
+        await db.query(`
+            UPDATE evaluations
+            SET total_score = $1, confidence_flag = false
+            WHERE id = $2
+        `, [scoreDiff, evaluation_id]);
+
+        // Update the grievance record
+        const updatedGrievance = await db.query(`
+            UPDATE grievances
+            SET status = 'resolved',
+                teacher_marks = $1,
+                teacher_note = $2,
+                resolved_at = NOW()
+            WHERE id = $3
+            RETURNING *
+        `, [scoreDiff, teacherNote || null, grievance_id]);
+
+        res.status(200).json({
+            message: 'Grievance resolved. Student marks updated successfully.',
+            grievance: updatedGrievance.rows[0]
+        });
+    } catch (error) {
+        console.error('Grievance Resolve Error:', error);
+        res.status(500).json({ error: 'Internal server error while resolving grievance.' });
+    }
+});
+
 // ==========================================
 // STUDENT DASHBOARD API
 // ==========================================
@@ -253,10 +359,14 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
                 ex.course_code AS "courseCode", 
                 s.status AS "status", 
                 e.total_score AS "totalScore",
-                e.id AS "evaluationId"
+                e.id AS "evaluationId",
+                CASE WHEN g.id IS NOT NULL THEN true ELSE false END AS "hasRaisedGrievance",
+                g.teacher_marks AS "grievanceMarks",
+                g.status AS "grievanceStatus"
             FROM submissions s
             JOIN exams ex ON s.exam_id = ex.id
             LEFT JOIN evaluations e ON s.id = e.submission_id
+            LEFT JOIN grievances g ON e.id = g.evaluation_id
             WHERE s.student_id = $1
             ORDER BY s.upload_timestamp DESC
         `;
@@ -273,11 +383,61 @@ router.get('/student/my-exams', authenticateToken, authorizeRoles('student'), as
 
 /**
  * POST /api/dashboard/student/grievance
- * Allows a student to raise a grievance for a specific evaluation.
+ * Allows a student to raise a grievance for a specific evaluation (one per evaluation).
+ * Student must include a message explaining the issue.
  */
 router.post('/student/grievance', authenticateToken, authorizeRoles('student'), async (req, res) => {
-    // Grievance feature - returns 503 gracefully if table does not exist
-    res.status(503).json({ error: 'Grievance system is not yet available in this deployment.' });
+    const student_id = req.user.id;
+    const { evaluation_id, message } = req.body;
+
+    if (!evaluation_id) {
+        return res.status(400).json({ error: 'evaluation_id is required.' });
+    }
+    if (!message || message.trim().length < 10) {
+        return res.status(400).json({ error: 'Please provide a message (at least 10 characters) explaining your grievance.' });
+    }
+
+    try {
+        // Verify the evaluation belongs to this student
+        const ownershipCheck = await db.query(`
+            SELECT e.id FROM evaluations e
+            JOIN submissions s ON e.submission_id = s.id
+            WHERE e.id = $1 AND s.student_id = $2
+        `, [evaluation_id, student_id]);
+
+        if (ownershipCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Forbidden: This evaluation does not belong to you.' });
+        }
+
+        // Check if grievance already exists for this evaluation
+        const existing = await db.query(
+            'SELECT id FROM grievances WHERE evaluation_id = $1',
+            [evaluation_id]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ error: 'A grievance has already been raised for this evaluation. You can only raise one grievance per evaluation.' });
+        }
+
+        // Insert grievance - with full error tracing
+        const result = await db.query(`
+            INSERT INTO grievances (evaluation_id, student_id, message, status)
+            VALUES ($1, $2, $3, 'pending')
+            RETURNING id, evaluation_id, message, status, created_at
+        `, [parseInt(evaluation_id), parseInt(student_id), message.trim()]);
+
+        res.status(201).json({
+            message: 'Grievance raised successfully. Your teacher will review it shortly.',
+            grievance: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Grievance Submission Error:', error.message);
+        // Handle duplicate grievance at DB level (unique constraint on evaluation_id)
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'A grievance has already been raised for this evaluation.' });
+        }
+        // Return the actual DB error message so it's visible in the UI for debugging
+        res.status(500).json({ error: 'Grievance error: ' + error.message });
+    }
 });
 
 /**

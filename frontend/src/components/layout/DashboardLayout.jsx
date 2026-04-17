@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FilePlus, LogOut, CheckSquare, ClipboardList, Shield, Users, BookOpen, UploadCloud, FileText, BarChart3, PieChart, Activity, Layers, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, FilePlus, LogOut, CheckSquare, ClipboardList, Shield, Users, BookOpen, UploadCloud, FileText, BarChart3, PieChart, Activity, Layers, Sun, Moon, MessageSquare } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import NotificationBell from '../NotificationBell';
 
@@ -39,6 +39,7 @@ const DashboardLayout = () => {
                 { name: 'Review Evaluations', path: '/instructor/evaluations', icon: BarChart3 },
                 { name: 'Pipeline Monitor', path: '/instructor/pipeline', icon: Activity },
                 { name: 'Analytics', path: '/instructor/analytics', icon: PieChart },
+                { name: 'Grievances', path: '/instructor/grievances', icon: MessageSquare },
             ];
         } else if (user.role === 'student') {
             return [

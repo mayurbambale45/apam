@@ -15,7 +15,7 @@ const FeedbackViewer = ({ evaluationId, onBack, hideBackButton = false }) => {
             setError(null);
             try {
                 // Use different endpoint based on role
-                const isTeacherOrAdmin = user?.role === 'teacher' || user?.role === 'administrator' || user?.role === 'examination_system';
+                const isTeacherOrAdmin = ['Faculty', 'administrator', 'Exam Cell'].includes(user?.role);
                 const endpoint = isTeacherOrAdmin
                     ? `/api/dashboard/teacher/feedback/${evaluationId}`
                     : `/api/dashboard/student/feedback/${evaluationId}`;

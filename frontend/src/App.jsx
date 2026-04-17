@@ -18,6 +18,7 @@ import UploadAnswerKey from './pages/instructor/UploadAnswerKey';
 import TeacherDashboard from './pages/instructor/TeacherDashboard';
 import TeacherSubmissions from './pages/instructor/TeacherSubmissions';
 import TeacherAnalytics from './pages/instructor/TeacherAnalytics';
+import TeacherGrievances from './pages/instructor/TeacherGrievances';
 
 // Exam System Pages
 import ExamCoordinatorDashboard from './pages/examination_system/ExamCoordinatorDashboard';
@@ -115,6 +116,12 @@ const AppRoutes = () => {
                     <Route path="instructor/pipeline" element={
                         <ProtectedRoute allowedRoles={['Faculty']}>
                             <PipelineMonitor />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="instructor/grievances" element={
+                        <ProtectedRoute allowedRoles={['Faculty']}>
+                            <TeacherGrievances />
                         </ProtectedRoute>
                     } />
 

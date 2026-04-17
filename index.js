@@ -38,9 +38,27 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// CORS — allow localhost dev + configurable prod frontend origin
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc.) during development
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error('CORS policy: Origin not allowed.'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(express.json({ limit: '10mb' }));  // limit JSON body size to 10MB
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
@@ -54,19 +72,42 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/pipeline', pipelineRoutes);
 
-// Standardize result messages
-app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', node: process.version }));
+// Health check with basic system info
+app.get('/api/health', (req, res) => res.status(200).json({
+    status: 'active',
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+    uptime: Math.floor(process.uptime()) + 's'
+}));
 
 const fs_node = require('fs');
 const initLogPath = path.join(__dirname, 'init.log');
 
-// Global Error Handling Middleware - Standard for Enterprise applications
+// ── Global Error Handling Middleware ──────────────────────────────────────────
+// Must be defined AFTER all routes. Handles both sync and async errors.
 app.use((err, req, res, next) => {
-    console.error('Unhandled Error:', err);
-    res.status(err.status || 500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
+    const status = err.status || err.statusCode || 500;
+    console.error(`[ERROR] ${req.method} ${req.path} → ${status}:`, err.message);
+    if (status === 500) console.error(err.stack);
+    if (res.headersSent) return next(err);
+    res.status(status).json({
+        error: status === 500 ? 'Internal Server Error' : err.message,
+        ...(process.env.NODE_ENV !== 'production' && { detail: err.message })
     });
+});
+
+// ── Handle uncaught promise rejections gracefully ─────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[PROCESS] Unhandled Rejection:', reason);
+    // Log but do not crash — let the request fail normally
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[PROCESS] Uncaught Exception:', err);
+    // Give time to log then exit cleanly (only for truly fatal errors)
+    if (err.code !== 'ECONNRESET') {
+        setTimeout(() => process.exit(1), 200);
+    }
 });
 
 /**
@@ -133,6 +174,79 @@ async function initSystem() {
             );
         `);
 
+        // ── Smart grievances table migration ──────────────────────────────────
+        // Strategy: Safely add missing columns and convert status ENUM to VARCHAR(30)
+        await db.query(`
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='grievances') THEN
+                    -- Safety patch for core columns
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='grievances' AND column_name='student_id') THEN
+                        ALTER TABLE grievances ADD COLUMN student_id BIGINT DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='grievances' AND column_name='message') THEN
+                        ALTER TABLE grievances ADD COLUMN message TEXT DEFAULT 'No message provided';
+                    END IF;
+
+                    -- Fix for: invalid input value for enum grievance_status: "pending"
+                    -- We convert the strict enum to a standard VARCHAR
+                    BEGIN
+                        ALTER TABLE grievances ALTER COLUMN status TYPE VARCHAR(30) USING status::VARCHAR;
+                        ALTER TABLE grievances ALTER COLUMN status SET DEFAULT 'pending';
+                    EXCEPTION WHEN OTHERS THEN NULL; END;
+                END IF;
+            END $$;
+        `);
+
+        // Re-create (or first-time create) with full correct schema
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS grievances (
+                id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                evaluation_id  BIGINT NOT NULL UNIQUE,
+                student_id     BIGINT NOT NULL,
+                message        TEXT NOT NULL,
+                status         VARCHAR(30) DEFAULT 'pending',
+                teacher_marks  DECIMAL(5,2),
+                teacher_note   TEXT,
+                created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                resolved_at    TIMESTAMPTZ,
+                CONSTRAINT fk_grievance_evaluation
+                    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+                CONSTRAINT fk_grievance_student
+                    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+        `);
+
+        // ── Safety patch: add any columns that may still be missing ───────────
+        await db.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='grievances' AND column_name='teacher_marks') THEN
+                    ALTER TABLE grievances ADD COLUMN teacher_marks DECIMAL(5,2);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='grievances' AND column_name='teacher_note') THEN
+                    ALTER TABLE grievances ADD COLUMN teacher_note TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='grievances' AND column_name='resolved_at') THEN
+                    ALTER TABLE grievances ADD COLUMN resolved_at TIMESTAMPTZ;
+                END IF;
+            END $$;
+        `);
+        log('Grievances table: OK');
+
+
+        // ── Create notifications table if not present ──────────────────────────
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS notifications (
+                id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                title       VARCHAR(255) NOT NULL,
+                message     TEXT NOT NULL,
+                target_role VARCHAR(50) NOT NULL DEFAULT 'all',
+                created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        log('Notifications table: OK');
+
         // Check/Seed Exam Cell
         const hashedExamcell = await bcrypt.hash('examcell', 12);
         
@@ -186,7 +300,24 @@ async function initSystem() {
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-    console.log(`Server is running on port ${PORT}`);
+const server = app.listen(PORT, async () => {
+    console.log(`[APAM] Server running on port ${PORT}`);
+    console.log(`[APAM] Environment: ${process.env.NODE_ENV || 'development'}`);
     await initSystem();
 });
+
+// ── Graceful Shutdown (required for production / Docker) ──────────────────────
+const gracefulShutdown = (signal) => {
+    console.log(`[APAM] ${signal} received — shutting down gracefully...`);
+    server.close(async () => {
+        console.log('[APAM] HTTP server closed.');
+        try { await db.pool.end(); console.log('[DB] Pool drained.'); } catch (e) {}
+        process.exit(0);
+    });
+    // Force exit after 10s if graceful shutdown hangs
+    setTimeout(() => { console.error('[APAM] Forced shutdown after timeout.'); process.exit(1); }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
+
