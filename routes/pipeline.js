@@ -172,7 +172,8 @@ router.get('/status/:exam_id', authenticateToken, authorizeRoles('Exam Cell', 'F
                 s.error_message,
                 s.upload_timestamp,
                 e.total_score,
-                e.confidence_flag
+                e.confidence_flag,
+                s.extracted_text
             FROM submissions s
             JOIN users u ON s.student_id = u.id
             LEFT JOIN students_profile sp ON u.id = sp.user_id

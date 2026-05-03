@@ -140,9 +140,11 @@ const EvaluationResults = () => {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 relative">
-            <div className="mb-6">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Review Evaluations</h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">Analyze AI-generated grades, review flagged submissions, and override grades.</p>
+            <div className="page-header mb-6">
+                <div>
+                    <h2 className="page-title">Review Evaluations</h2>
+                    <p className="page-subtitle">Analyze AI-generated grades, review flagged submissions, and override grades.</p>
+                </div>
             </div>
 
             {/* View Layer: Split layout */}
@@ -150,11 +152,11 @@ const EvaluationResults = () => {
                 
                 {/* Left Column: Search & Table */}
                 <div className={`flex-1 transition-all duration-300 ${selectedEvaluationId ? 'xl:w-1/2' : 'w-full'}`}>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden mb-6 transition-colors">
+                    <div className="card overflow-hidden mb-6" style={{ padding: 0 }}>
                         
                         {/* Search Header */}
-                        <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/80">
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Select Exam</label>
+                        <div className="p-4 border-b border-gray-200 dark:border-slate-700" style={{ background: 'var(--bg-page)' }}>
+                            <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Select Exam</label>
                             <div className="flex gap-4 max-w-xl">
                                 {isLoadingExams ? (
                                     <div className="text-gray-400 text-sm py-2">Loading exams...</div>
@@ -162,11 +164,11 @@ const EvaluationResults = () => {
                                     <select
                                         value={examId}
                                         onChange={(e) => { setExamId(e.target.value); handleSearch(e.target.value); }}
-                                        className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
+                                        className="form-select flex-1"
                                     >
-                                        <option value="" className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">— Select an Exam to Analyze —</option>
+                                        <option value="">— Select an Exam to Analyze —</option>
                                         {exams.map(exam => (
-                                            <option key={exam.id} value={exam.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
+                                            <option key={exam.id} value={exam.id}>
                                                 #{exam.id} — {exam.course_code} — {exam.exam_name}
                                             </option>
                                         ))}
@@ -178,19 +180,19 @@ const EvaluationResults = () => {
 
                         {/* Data Table */}
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                            <table className="data-table">
                                 <thead>
-                                    <tr className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
-                                        <th className="px-6 py-4 font-semibold">Student</th>
-                                        <th className="px-6 py-4 font-semibold text-center">Status</th>
-                                        <th className="px-6 py-4 font-semibold text-center">Score</th>
-                                        <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th style={{ textAlign: 'center' }}>Status</th>
+                                        <th style={{ textAlign: 'center' }}>Score</th>
+                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-slate-700/50">
+                                <tbody>
                                     {hasSearched && evaluations.length === 0 && !isFetching && !error && (
                                         <tr>
-                                            <td colSpan="4" className="px-6 py-12 text-center text-gray-500 italic">
+                                            <td colSpan="4" className="text-center italic" style={{ padding: '40px', color: 'var(--text-muted)' }}>
                                                 No submissions found for this exam yet.
                                             </td>
                                         </tr>
@@ -199,47 +201,43 @@ const EvaluationResults = () => {
                                     {evaluations.map((evalData, index) => {
                                         const needsReview = evalData.needsReview === true;
                                         const isSelected = selectedEvaluationId === evalData.evaluationId;
-                                        const rowBg = isSelected 
-                                            ? 'bg-blue-50 dark:bg-slate-700 border-l-4 border-blue-500' 
-                                            : needsReview ? 'bg-amber-50/40 dark:bg-amber-900/10 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 border-l-4 border-transparent';
+                                        const rowStyle = isSelected 
+                                            ? { background: 'var(--bg-page)', borderLeft: '4px solid var(--color-accent)' } 
+                                            : needsReview ? { background: 'rgba(245,158,11,0.05)' } : {};
 
                                         return (
-                                            <tr key={index} className={`transition-colors cursor-pointer ${rowBg}`} onClick={() => evalData.evaluationId && setSelectedEvaluationId(evalData.evaluationId)}>
-                                                <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                            <tr key={index} style={{ cursor: 'pointer', ...rowStyle }} onClick={() => evalData.evaluationId && setSelectedEvaluationId(evalData.evaluationId)}>
+                                                <td>
+                                                    <div className="flex items-center gap-2" style={{ fontWeight: 700 }}>
                                                         {evalData.studentName}
                                                         {needsReview && (
                                                             <span title="AI flagged this paper for human review." className="text-amber-500">
-                                                                <AlertTriangle size={16} />
+                                                                <AlertTriangle size={14} />
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 font-mono mt-1">PRN: {evalData.prnNumber || 'N/A'}</div>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: 2 }}>PRN: {evalData.prnNumber || 'N/A'}</div>
                                                 </td>
                                                 
-                                                <td className="px-6 py-4 text-center">
+                                                <td style={{ textAlign: 'center' }}>
                                                     {evalData.submissionStatus === 'graded' ? (
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400">
-                                                            Graded
-                                                        </span>
+                                                        <span className="badge badge-emerald">Graded</span>
                                                     ) : (
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
-                                                            Pending
-                                                        </span>
+                                                        <span className="badge badge-gray">Pending</span>
                                                     )}
                                                 </td>
                                                 
-                                                <td className="px-6 py-4 text-center">
+                                                <td style={{ textAlign: 'center' }}>
                                                     {evalData.totalScore !== null ? (
-                                                        <span className={`text-lg font-bold ${needsReview ? 'text-amber-600 dark:text-amber-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                        <span style={{ fontWeight: 800, fontSize: '14px', color: needsReview ? 'var(--color-warning)' : 'inherit' }}>
                                                             {evalData.totalScore}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-gray-400">-</span>
+                                                        <span style={{ color: 'var(--text-muted)' }}>-</span>
                                                     )}
                                                 </td>
                                                 
-                                                <td className="px-6 py-4 text-right">
+                                                <td style={{ textAlign: 'right' }}>
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button 
                                                             disabled={!evalData.evaluationId}
@@ -247,10 +245,11 @@ const EvaluationResults = () => {
                                                                 e.stopPropagation();
                                                                 setSelectedEvaluationId(evalData.evaluationId);
                                                             }}
-                                                            className="inline-flex items-center p-2 text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                                                            className="btn btn-ghost"
+                                                            style={{ padding: '6px' }}
                                                             title="View Details"
                                                         >
-                                                            <FileText size={20} />
+                                                            <FileText size={16} />
                                                         </button>
                                                         {evalData.evaluationId && (
                                                             <button 
@@ -258,10 +257,11 @@ const EvaluationResults = () => {
                                                                     e.stopPropagation();
                                                                     openOverrideModal(evalData);
                                                                 }}
-                                                                className="inline-flex items-center p-2 text-gray-400 hover:text-orange-600 transition-colors"
+                                                                className="btn btn-ghost"
+                                                                style={{ padding: '6px', color: 'var(--color-warning)' }}
                                                                 title="Override Grade"
                                                             >
-                                                                <Edit3 size={18} />
+                                                                <Edit3 size={16} />
                                                             </button>
                                                         )}
                                                     </div>
@@ -284,27 +284,27 @@ const EvaluationResults = () => {
                             <div className="space-y-6 sticky top-8">
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
-                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1"><BarChart2 size={16}/> Average</p>
-                                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.avg}</p>
+                                    <div className="stat-card" style={{ borderTop: '3px solid var(--text-muted)' }}>
+                                        <p className="stat-label flex items-center gap-1"><BarChart2 size={12}/> Average</p>
+                                        <p className="stat-value">{stats.avg}</p>
                                     </div>
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
-                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">Graded</p>
-                                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats.count}</p>
+                                    <div className="stat-card" style={{ borderTop: '3px solid var(--border)' }}>
+                                        <p className="stat-label flex items-center gap-1">Graded</p>
+                                        <p className="stat-value">{stats.count}</p>
                                     </div>
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
-                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 text-green-600 dark:text-green-400"><TrendingUp size={16}/> High</p>
-                                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.high}</p>
+                                    <div className="stat-card" style={{ borderTop: '3px solid var(--color-success)' }}>
+                                        <p className="stat-label flex items-center gap-1" style={{ color: 'var(--color-success)' }}><TrendingUp size={12}/> High</p>
+                                        <p className="stat-value" style={{ color: 'var(--color-success)' }}>{stats.high}</p>
                                     </div>
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
-                                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 text-red-600 dark:text-red-400"><TrendingDown size={16}/> Low</p>
-                                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.low}</p>
+                                    <div className="stat-card" style={{ borderTop: '3px solid var(--color-danger)' }}>
+                                        <p className="stat-label flex items-center gap-1" style={{ color: 'var(--color-danger)' }}><TrendingDown size={12}/> Low</p>
+                                        <p className="stat-value" style={{ color: 'var(--color-danger)' }}>{stats.low}</p>
                                     </div>
                                 </div>
 
                                 {/* Chart */}
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
-                                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-6 uppercase tracking-wider">Score Distribution</h3>
+                                <div className="card">
+                                    <h3 className="section-label mb-6">Score Distribution</h3>
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -328,18 +328,19 @@ const EvaluationResults = () => {
 
                         {/* Case 2: Show Drilldown if OPEN */}
                         {selectedEvaluationId && (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-700 h-full min-h-[600px] flex flex-col relative transition-colors">
+                            <div className="card h-full min-h-[600px] flex flex-col relative" style={{ padding: 0 }}>
                                 {/* Modal Header */}
                                 <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/80 rounded-t-2xl">
-                                    <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                                         <FileText className="text-blue-600" size={18} />
                                         Evaluation Details
                                     </h3>
                                     <button 
                                         onClick={() => setSelectedEvaluationId(null)}
-                                        className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-200 dark:hover:text-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                        className="btn btn-ghost"
+                                        style={{ padding: 4 }}
                                     >
-                                        <X size={20} />
+                                        <X size={16} />
                                     </button>
                                 </div>
                                 
@@ -360,19 +361,20 @@ const EvaluationResults = () => {
             {/* ============================================== */}
             {overrideModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 relative transition-colors">
+                    <div className="card max-w-md w-full relative">
                         <button 
                             onClick={() => setOverrideModalOpen(false)}
-                            className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:text-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            className="btn btn-ghost absolute top-4 right-4"
+                            style={{ padding: 4 }}
                         >
-                            <X size={20} />
+                            <X size={16} />
                         </button>
 
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
-                            <Edit3 className="text-orange-500" size={20} />
+                        <h3 className="page-title mb-1 flex items-center gap-2">
+                            <Edit3 className="text-orange-500" size={18} />
                             Override AI Grade
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Manually adjust the score and provide optional feedback.</p>
+                        <p className="page-subtitle mb-6">Manually adjust the score and provide optional feedback.</p>
 
                         {overrideStatus.message && (
                             <div className={`p-3 rounded-lg mb-4 text-sm font-medium ${overrideStatus.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
@@ -382,24 +384,26 @@ const EvaluationResults = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">New Total Score *</label>
+                                <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>New Total Score *</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     required
                                     value={overrideScore}
                                     onChange={(e) => setOverrideScore(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-lg transition-colors"
+                                    className="form-input"
+                                    style={{ fontSize: 16, fontFamily: 'monospace' }}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Override Justification <span className="font-normal text-gray-400">(Optional)</span></label>
+                                <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Override Justification <span className="font-normal text-gray-400">(Optional)</span></label>
                                 <textarea
                                     rows="3"
                                     value={overrideFeedback}
                                     onChange={(e) => setOverrideFeedback(e.target.value)}
                                     placeholder="Reason for modifying the AI's grade..."
-                                    className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none transition-colors"
+                                    className="form-input"
+                                    style={{ resize: 'none' }}
                                 />
                             </div>
                         </div>
@@ -407,19 +411,19 @@ const EvaluationResults = () => {
                         <div className="flex justify-end gap-3 mt-6">
                             <button
                                 onClick={() => setOverrideModalOpen(false)}
-                                className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-colors"
+                                className="btn btn-ghost"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleOverrideSubmit}
                                 disabled={isOverriding}
-                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl transition-colors disabled:bg-orange-400"
+                                className="btn btn-amber"
                             >
                                 {isOverriding ? (
-                                    <><Loader2 className="animate-spin" size={16} /> Saving...</>
+                                    <><Loader2 className="animate-spin" size={14} /> Saving...</>
                                 ) : (
-                                    <><Save size={16} /> Confirm Override</>
+                                    <><Save size={14} /> Confirm Override</>
                                 )}
                             </button>
                         </div>

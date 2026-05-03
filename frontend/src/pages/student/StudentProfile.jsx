@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
     User, Hash, Building2, Calendar, Mail, GraduationCap,
-    Loader2, Shield, Clock
+    Loader2, Clock
 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/api';
@@ -27,87 +27,132 @@ const StudentProfile = () => {
 
     if (isLoading) {
         return (
-            <div className="max-w-3xl mx-auto p-12 text-center text-gray-400">
-                <Loader2 className="animate-spin mx-auto mb-3" size={28} />
-                Loading your profile...
+            <div style={{ maxWidth:640, margin:'0 auto', padding:'60px 20px', textAlign:'center', color:'var(--text-muted)' }}>
+                <Loader2 className="animate-spin" size={22} style={{ margin:'0 auto 8px' }} />
+                <span style={{ fontSize:13 }}>Loading profile...</span>
             </div>
         );
     }
 
     const profileFields = [
-        { label: "PRN Number", value: profile?.prn_number, icon: Hash, highlight: true, sublabel: "Permanent Registration Number — primary unique identifier at WCE Sangli" },
-        { label: "Roll Number", value: profile?.roll_number, icon: User, sublabel: "Class roll number assigned by department" },
-        { label: "Department", value: profile?.department, icon: Building2, sublabel: "Academic department / branch" },
-        { label: "Academic Year", value: profile?.year, icon: Calendar, sublabel: "Current year of study (FY / SY / TY / LY)" },
-        { label: "Email Address", value: profile?.email, icon: Mail, sublabel: "Registered institutional email" },
-        { label: "Account Created", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null, icon: Clock, sublabel: "Registration date on APAM" },
+        { label: "PRN Number", value: profile?.prn_number, icon: Hash, highlight: true, sublabel: "Permanent Registration Number" },
+        { label: "Roll Number", value: profile?.roll_number, icon: User, sublabel: "Class roll number" },
+        { label: "Department", value: profile?.department, icon: Building2, sublabel: "Academic department" },
+        { label: "Academic Year", value: profile?.year, icon: Calendar, sublabel: "Current year of study" },
+        { label: "Email Address", value: profile?.email, icon: Mail, sublabel: "Registered email" },
+        { label: "Account Created", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null, icon: Clock, sublabel: "Registration date" },
     ];
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
-            {/* Header */}
-            <div>
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-                    <User className="text-emerald-500" size={28} /> My Profile
-                </h2>
-                <p className="text-gray-500 dark:text-slate-400 mt-1">Your academic identity at Walchand College of Engineering, Sangli.</p>
+        <div style={{ maxWidth:640, margin:'0 auto' }}>
+            {/* Page Header */}
+            <div className="page-header" style={{ marginBottom:16 }}>
+                <div>
+                    <h2 className="page-title" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <User size={18} style={{ color:'#8b5cf6' }}/> My Profile
+                    </h2>
+                    <p className="page-subtitle">Your academic identity at WCE Sangli.</p>
+                </div>
             </div>
 
-            {/* Identity Card */}
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-8 text-white shadow-xl">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="h-20 w-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                        <span className="text-3xl font-black">
-                            {profile?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                        </span>
+            {/* Compact Identity Card — violet theme */}
+            <div style={{
+                background: 'linear-gradient(135deg, #6d28d9, #7c3aed, #6366f1)',
+                borderRadius: 14, padding: '20px 22px', color: '#fff',
+                marginBottom: 14,
+            }}>
+                <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+                    {/* Avatar */}
+                    <div style={{
+                        width:50, height:50, borderRadius:12,
+                        background:'rgba(255,255,255,0.15)',
+                        border:'1px solid rgba(255,255,255,0.15)',
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        fontSize:18, fontWeight:800, flexShrink:0,
+                    }}>
+                        {profile?.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2)}
                     </div>
-                    <div className="flex-1">
-                        <h3 className="text-2xl font-black">{profile?.full_name}</h3>
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-sm text-white text-xs font-bold rounded-full border border-white/20">
-                                <GraduationCap size={14} /> Student
+
+                    <div style={{ flex:1, minWidth:0 }}>
+                        <h3 style={{ fontSize:'1.1rem', fontWeight:800, margin:0, lineHeight:1.2 }}>{profile?.full_name}</h3>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:6 }}>
+                            <span style={{
+                                display:'inline-flex', alignItems:'center', gap:4,
+                                padding:'2px 8px', borderRadius:5,
+                                background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.1)',
+                                fontSize:10, fontWeight:700,
+                            }}>
+                                <GraduationCap size={10}/> Student
                             </span>
                             {profile?.department && (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-sm text-white text-xs font-bold rounded-full border border-white/20">
-                                    <Building2 size={14} /> {profile.department}
+                                <span style={{
+                                    display:'inline-flex', alignItems:'center', gap:4,
+                                    padding:'2px 8px', borderRadius:5,
+                                    background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.1)',
+                                    fontSize:10, fontWeight:700,
+                                }}>
+                                    <Building2 size={10}/> {profile.department}
                                 </span>
                             )}
                             {profile?.year && (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-sm text-white text-xs font-bold rounded-full border border-white/20">
-                                    <Calendar size={14} /> {profile.year}
+                                <span style={{
+                                    display:'inline-flex', alignItems:'center', gap:4,
+                                    padding:'2px 8px', borderRadius:5,
+                                    background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.1)',
+                                    fontSize:10, fontWeight:700,
+                                }}>
+                                    <Calendar size={10}/> {profile.year}
                                 </span>
                             )}
                         </div>
-
-                        {profile?.prn_number && (
-                            <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 inline-block">
-                                <div className="text-[10px] text-emerald-200 uppercase tracking-wider font-bold">PRN</div>
-                                <div className="text-2xl font-black font-mono tracking-widest">{profile.prn_number}</div>
-                            </div>
-                        )}
                     </div>
+
+                    {/* PRN inline */}
+                    {profile?.prn_number && (
+                        <div style={{
+                            padding:'8px 14px', borderRadius:8,
+                            background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.08)',
+                        }}>
+                            <div style={{ fontSize:8, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.06em', fontWeight:700 }}>PRN</div>
+                            <div style={{ fontSize:16, fontWeight:800, fontFamily:'monospace', letterSpacing:'1.5px', marginTop:1 }}>{profile.prn_number}</div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Detail Fields */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/80">
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">Academic Details</h3>
+            <div className="card" style={{ padding:0, overflow:'hidden', marginBottom:14 }}>
+                <div style={{ padding:'10px 16px', borderBottom:'1px solid var(--border)', background:'var(--bg-page)' }}>
+                    <h3 style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>Academic Details</h3>
                 </div>
-                <div className="divide-y divide-gray-50 dark:divide-slate-700/50">
+                <div>
                     {profileFields.map((field, i) => {
                         const Icon = field.icon;
                         return (
-                            <div key={i} className="px-6 py-5 flex items-start gap-4 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                <div className={`p-2.5 rounded-xl flex-shrink-0 ${field.highlight ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-300'}`}>
-                                    <Icon size={18} />
+                            <div key={i} style={{
+                                padding:'12px 16px', display:'flex', alignItems:'flex-start', gap:12,
+                                borderBottom: i < profileFields.length - 1 ? '1px solid var(--border)' : 'none',
+                            }}>
+                                <div style={{
+                                    padding:7, borderRadius:7, flexShrink:0,
+                                    background: field.highlight ? 'rgba(139,92,246,0.08)' : 'var(--bg-page)',
+                                    color: field.highlight ? '#8b5cf6' : 'var(--text-muted)',
+                                    border: `1px solid ${field.highlight ? 'rgba(139,92,246,0.15)' : 'var(--border)'}`,
+                                }}>
+                                    <Icon size={14}/>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{field.label}</div>
-                                    <div className={`mt-0.5 ${field.highlight ? 'text-xl font-black text-gray-900 dark:text-white font-mono tracking-wider' : 'text-base font-semibold text-gray-900 dark:text-white'}`}>
-                                        {field.value || <span className="text-gray-300 dark:text-slate-600 italic font-normal">Not set</span>}
+                                <div style={{ flex:1, minWidth:0 }}>
+                                    <div className="section-label" style={{ marginBottom:1 }}>{field.label}</div>
+                                    <div style={{
+                                        fontWeight: field.highlight ? 800 : 600,
+                                        fontSize: field.highlight ? '0.95rem' : '0.82rem',
+                                        fontFamily: field.highlight ? 'monospace' : 'inherit',
+                                        letterSpacing: field.highlight ? '1px' : 'normal',
+                                        color: 'var(--text-primary)',
+                                    }}>
+                                        {field.value || <span style={{ color:'var(--text-muted)', fontStyle:'italic', fontWeight:400 }}>Not set</span>}
                                     </div>
-                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{field.sublabel}</p>
+                                    <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:1 }}>{field.sublabel}</div>
                                 </div>
                             </div>
                         );
@@ -115,12 +160,12 @@ const StudentProfile = () => {
                 </div>
             </div>
 
-            {/* WCE Footer */}
-            <div className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 text-center">
-                <p className="text-xs text-gray-400 dark:text-slate-400">
-                    <span className="font-bold text-gray-500 dark:text-slate-300">Walchand College of Engineering, Sangli</span> — Autonomous Institute affiliated to Shivaji University, Kolhapur.
+            {/* Footer */}
+            <div className="card" style={{ textAlign:'center', padding:12 }}>
+                <p style={{ fontSize:11, color:'var(--text-secondary)', margin:0 }}>
+                    <span style={{ fontWeight:700, color:'var(--text-primary)' }}>Walchand College of Engineering, Sangli</span>
                 </p>
-                <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">Academic Paper Assessment & Management System (APAM) · Student Module</p>
+                <p style={{ fontSize:9, color:'var(--text-muted)', marginTop:3 }}>APAM · Student Module</p>
             </div>
         </div>
     );

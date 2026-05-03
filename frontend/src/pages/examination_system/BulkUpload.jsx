@@ -99,7 +99,7 @@ const BulkUpload = () => {
             const autoStudentId = tryMatchPRN(file.name);
             return {
                 file,
-                id: crypto.randomUUID(),
+                id: Math.random().toString(36).substring(2, 15) + Date.now().toString(36),
                 status: autoStudentId ? 'resolved' : 'unmapped',
                 student_id: autoStudentId || '',
                 reason: autoStudentId ? null : 'No PRN in filename'
@@ -196,10 +196,10 @@ const BulkUpload = () => {
             </div>
 
             {/* Step 1: Exam Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+            <div className="card">
                 <div className="flex items-center gap-2 mb-4">
                     <span className="w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0">1</span>
-                    <h2 className="font-bold text-gray-900 dark:text-white">Select Target Exam</h2>
+                    <h2 className="font-bold" style={{ color: 'var(--text-primary)' }}>Select Target Exam</h2>
                 </div>
                 {isLoadingExams ? (
                     <div className="text-gray-400 dark:text-gray-500 text-sm flex items-center gap-2"><Loader2 className="animate-spin" size={16} /> Loading exams...</div>
@@ -208,11 +208,11 @@ const BulkUpload = () => {
                         <select
                             value={selectedExamId}
                             onChange={e => handleExamChange(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-teal-500 text-gray-900 dark:text-gray-100 text-sm transition-all appearance-none pr-10"
+                            className="form-select"
                         >
                             <option value="">— Select an exam —</option>
                             {exams.map(ex => (
-                                <option key={ex.id} value={ex.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">#{ex.id} — {ex.course_code} — {ex.exam_name}</option>
+                                <option key={ex.id} value={ex.id}>#{ex.id} — {ex.course_code} — {ex.exam_name}</option>
                             ))}
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
@@ -222,11 +222,11 @@ const BulkUpload = () => {
 
             {/* Step 2: File Drop */}
             {selectedExamId && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                <div className="card">
                     <div className="flex items-center gap-2 mb-4">
                         <span className="w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0">2</span>
-                        <h2 className="font-bold text-gray-900 dark:text-white">Upload Answer Scripts</h2>
-                        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                        <h2 className="font-bold" style={{ color: 'var(--text-primary)' }}>Upload Answer Scripts</h2>
+                        <span className="ml-auto text-xs flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
                             <Info size={12} /> PDFs/Images, max 20MB each
                         </span>
                     </div>
@@ -251,7 +251,7 @@ const BulkUpload = () => {
                         <div className="p-4 bg-teal-50 dark:bg-teal-900/30 rounded-full mb-4 text-teal-600 dark:text-teal-400">
                             <UploadCloud size={30} />
                         </div>
-                        <h3 className="text-base font-bold text-gray-900 dark:text-white">Drop multiple files here</h3>
+                        <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Drop multiple files here</h3>
                         <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Or click to browse. PDF, JPG, PNG accepted.</p>
                         <p className="text-xs text-teal-600 dark:text-teal-400 font-medium mt-2">
                             💡 Name files with PRN (e.g. <code className="bg-teal-50 dark:bg-teal-900/40 px-1 rounded">2022027001_John.pdf</code>) for auto-mapping
@@ -262,10 +262,10 @@ const BulkUpload = () => {
 
             {/* Step 3: File List + Mapping */}
             {files.length > 0 && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
+                <div className="card">
                     <div className="flex items-center gap-2 mb-5">
                         <span className="w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-black flex items-center justify-center flex-shrink-0">3</span>
-                        <h2 className="font-bold text-gray-900 dark:text-white">Review & Map Students</h2>
+                        <h2 className="font-bold" style={{ color: 'var(--text-primary)' }}>Review & Map Students</h2>
                         <div className="ml-auto flex gap-2 text-xs">
                             <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 rounded-lg font-bold">{mappedCount} mapped</span>
                             {unmappedCount > 0 && <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-lg font-bold">{unmappedCount} unmapped</span>}
@@ -280,22 +280,22 @@ const BulkUpload = () => {
                                     <FileText size={16} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{f.file.name}</p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-500">{(f.file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{f.file.name}</p>
+                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{(f.file.size / (1024 * 1024)).toFixed(2)} MB</p>
                                 </div>
                                 <FileBadge status={f.status} reason={f.reason} />
                                 {/* Student selector */}
                                 <select
                                     value={f.student_id}
                                     onChange={e => updateStudentMapping(f.id, e.target.value)}
-                                    className={`text-xs px-2 py-1.5 border rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900 dark:text-gray-100 transition-all max-w-[200px]
-                                        ${f.student_id ? 'border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-slate-700' : 'border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-slate-700'}`}
+                                    className="form-select"
+                                    style={{ maxWidth: 200, padding: '4px 8px' }}
                                 >
-                                    <option value="" className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">— Select student —</option>
+                                    <option value="">— Select student —</option>
                                     {isLoadingStudents ? (
-                                        <option disabled className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">Loading...</option>
+                                        <option disabled>Loading...</option>
                                     ) : students.map(s => (
-                                        <option key={s.id} value={s.id} className="bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
+                                        <option key={s.id} value={s.id}>
                                             {s.prn_number} — {s.full_name}
                                         </option>
                                     ))}
@@ -327,8 +327,8 @@ const BulkUpload = () => {
                     )}
 
                     <div className="flex justify-between items-center mt-6 pt-5 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">
-                            <span className="font-bold text-gray-900">{files.length}</span> files ready ·{' '}
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{files.length}</span> files ready ·{' '}
                             <span className={`font-bold ${unmappedCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
                                 {unmappedCount > 0 ? `${unmappedCount} will be skipped` : 'All mapped'}
                             </span>
@@ -336,7 +336,8 @@ const BulkUpload = () => {
                         <button
                             onClick={handleBulkUpload}
                             disabled={isUploading || mappedCount === 0}
-                            className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-teal-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn btn-primary"
+                            style={{ padding: '10px 20px', fontSize: '14px' }}
                         >
                             {isUploading ? (
                                 <><Loader2 className="animate-spin" size={18} /> Uploading...</>
@@ -350,14 +351,14 @@ const BulkUpload = () => {
 
             {/* Upload Results */}
             {uploadResults && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 transition-colors">
-                    <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <div className="card">
+                    <h2 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <CheckCircle2 className="text-emerald-500" size={20} /> Upload Complete
                     </h2>
                     <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="bg-gray-50 dark:bg-slate-700 rounded-xl p-4 text-center">
-                            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total</p>
-                            <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{uploadResults.total}</p>
+                        <div style={{ background: 'var(--bg-page)', borderRadius: 10, padding: 16, textAlign: 'center' }}>
+                            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Total</p>
+                            <p className="text-2xl font-black mt-1" style={{ color: 'var(--text-primary)' }}>{uploadResults.total}</p>
                         </div>
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 text-center border border-emerald-100 dark:border-emerald-800/30">
                             <p className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">Uploaded</p>

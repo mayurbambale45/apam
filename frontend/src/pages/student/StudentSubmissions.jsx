@@ -106,26 +106,26 @@ const StudentSubmissions = () => {
 
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
                     {/* Exam Header */}
-                    <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 md:p-8">
+                    <div style={{ background:'linear-gradient(135deg, #4f46e5, #7c3aed)', color:'#fff', padding:'20px 24px' }}>
                         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                             <div>
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white text-[10px] font-bold rounded-full uppercase tracking-wider mb-3">
-                                    <BookOpen size={12} /> {activeExamDetails?.courseCode}
+                                <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:20, fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.1)', marginBottom:10 }}>
+                                    <BookOpen size={11} /> {activeExamDetails?.courseCode}
                                 </span>
-                                <h2 className="text-3xl font-black">{activeExamDetails?.examName}</h2>
-                                <p className="text-emerald-200 mt-1 flex items-center gap-2">
-                                    <CheckCircle2 size={16} /> Official AI Evaluation Report
+                                <h2 style={{ fontSize:'1.15rem', fontWeight:800, margin:0 }}>{activeExamDetails?.examName}</h2>
+                                <p style={{ fontSize:12, color:'#c4b5fd', marginTop:4, display:'flex', alignItems:'center', gap:6 }}>
+                                    <CheckCircle2 size={14} /> Official AI Evaluation Report
                                 </p>
                             </div>
-                            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[120px]">
-                                <p className="text-emerald-200 text-[10px] font-bold uppercase tracking-wider mb-1">Total Score</p>
-                                <p className="text-4xl font-black">{activeExamDetails?.totalScore}</p>
+                            <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 16px', textAlign:'center', minWidth:90 }}>
+                                <p style={{ fontSize:9, color:'#c4b5fd', fontWeight:700, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:2 }}>Score</p>
+                                <p style={{ fontSize:'1.8rem', fontWeight:800, lineHeight:1, margin:0 }}>{activeExamDetails?.totalScore}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Feedback Content */}
-                    <div className="p-4 md:p-6 bg-gray-50">
+                    <div className="p-4 md:p-6" style={{ background:'var(--bg-page)' }}>
                         <FeedbackViewer evaluationId={activeEvaluationId} hideBackButton={true} />
                     </div>
                 </div>
@@ -137,10 +137,10 @@ const StudentSubmissions = () => {
         <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div>
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-                    <FileText className="text-emerald-500" size={28} /> Results
+                <h2 className="page-title" style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <FileText size={18} style={{ color:'#8b5cf6' }}/> Results
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">All your exam answer scripts and AI evaluation results.</p>
+                <p className="page-subtitle">All your exam answer scripts and AI evaluation results.</p>
             </div>
 
             {/* Stats Bar */}
@@ -208,7 +208,7 @@ const StudentSubmissions = () => {
                                     const hasGrievance = exam.hasRaisedGrievance;
                                     const isResolved = exam.grievanceStatus === 'resolved';
                                     return (
-                                        <tr key={index} className="hover:bg-emerald-50/30 dark:hover:bg-slate-700/50 transition-colors group">
+                                        <tr key={index} className="hover:bg-violet-50/30 dark:hover:bg-slate-700/50 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-[10px] font-bold rounded-full uppercase tracking-wider">
                                                     <BookOpen size={10} /> {exam.courseCode}
@@ -262,7 +262,7 @@ const StudentSubmissions = () => {
                                                 {isGraded && exam.evaluationId ? (
                                                     <div className="flex justify-end items-center gap-2">
                                                         <button onClick={() => handleViewFeedback(exam)}
-                                                            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-800/50 transition-colors">
+                                                            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/50 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors">
                                                             <Eye size={14} /> View Feedback
                                                         </button>
                                                         {/* Grievance button: only show if no grievance raised yet and not resolved */}

@@ -1,36 +1,35 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
     Activity, ChevronDown, Loader2, RefreshCw, Play, Globe,
-    GlobeLock, CheckCircle2, AlertCircle, Clock, Zap, FileText,
-    BarChart3, ChevronRight, X, Terminal, AlertTriangle, Wifi,
-    CreditCard, RotateCcw, Upload, Search
+    GlobeLock, CheckCircle2, AlertCircle, Clock, FileText,
+    X, Terminal, AlertTriangle, Wifi, CreditCard, RotateCcw, Upload, Search
 } from 'lucide-react';
 import api from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// ─── Pipeline Status Badge ───────────────────────────────────────────────────────────
 const PipelineBadge = ({ status }) => {
     const map = {
-        uploaded:   { cls: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',          icon: Clock,          label: 'Uploaded' },
-        extracting: { cls: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400', icon: Loader2,        label: 'Extracting', spin: true },
-        evaluating: { cls: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',        icon: Loader2,        label: 'Evaluating', spin: true },
-        completed:  { cls: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400', icon: CheckCircle2, label: 'Completed' },
-        failed:     { cls: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',            icon: AlertCircle,    label: 'Failed' },
+        uploaded:   { cls: 'badge-gray',    icon: Clock,        label: 'Uploaded' },
+        extracting: { cls: 'badge-amber',   icon: Loader2,      label: 'Extracting', spin: true },
+        evaluating: { cls: 'badge-sky',     icon: Loader2,      label: 'Evaluating', spin: true },
+        completed:  { cls: 'badge-emerald', icon: CheckCircle2, label: 'Completed' },
+        failed:     { cls: 'badge-red',     icon: AlertCircle,  label: 'Failed' },
     };
     const cfg = map[status] || map.uploaded;
     const Icon = cfg.icon;
     return (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${cfg.cls}`}>
-            <Icon size={11} className={cfg.spin ? 'animate-spin' : ''} /> {cfg.label}
+        <span className={`badge ${cfg.cls}`}>
+            <Icon size={9} className={cfg.spin ? 'animate-spin' : ''} /> {cfg.label}
         </span>
     );
 };
 
-// ─── Stat mini card ───────────────────────────────────────────────────────────
-const StatPill = ({ label, value, color }) => (
-    <div className={`flex flex-col items-center px-4 py-3 rounded-xl border ${color}`}>
-        <p className="text-xs font-bold uppercase tracking-wider opacity-70">{label}</p>
-        <p className="text-2xl font-black mt-0.5">{value}</p>
+// ─── Stat Card ──────────────────────────────────────────────────────────────
+const StatCard = ({ label, value, accent }) => (
+    <div className="stat-card" style={{ borderTop: `3px solid ${accent}` }}>
+        <div className="stat-label">{label}</div>
+        <div className="stat-value" style={{ color: accent }}>{value}</div>
     </div>
 );
 
@@ -538,20 +537,20 @@ const PipelineMonitor = () => {
             {/* Stats Row */}
             {stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    <StatPill label="Total"      value={stats.total}      color="border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white" />
-                    <StatPill label="Uploaded"   value={stats.uploaded}   color="border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400" />
-                    <StatPill label="Evaluating" value={stats.evaluating} color="border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400" />
-                    <StatPill label="Completed"  value={stats.completed}  color="border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" />
-                    <StatPill label="Failed"     value={stats.failed}     color="border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400" />
+                    <StatCard label="Total"      value={stats.total}      accent="var(--text-muted)" />
+                    <StatCard label="Uploaded"   value={stats.uploaded}   accent="var(--text-secondary)" />
+                    <StatCard label="Evaluating" value={stats.evaluating} accent="var(--color-brand)" />
+                    <StatCard label="Completed"  value={stats.completed}  accent="var(--color-success)" />
+                    <StatCard label="Failed"     value={stats.failed}     accent="var(--color-danger)" />
                 </div>
             )}
 
             {/* Progress bar */}
             {stats && stats.total > 0 && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 transition-colors">
+                <div className="card">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Overall Pipeline Progress</span>
-                        <span className="text-sm font-black text-gray-900 dark:text-white">{stats.completed} / {stats.total} completed</span>
+                        <span className="section-label" style={{ color: 'var(--text-primary)' }}>Overall Pipeline Progress</span>
+                        <span className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>{stats.completed} / {stats.total} completed</span>
                     </div>
                     <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden flex gap-0.5">
                         <div className="bg-emerald-500 transition-all duration-700" style={{ width: `${(stats.completed / stats.total) * 100}%` }} />
@@ -568,9 +567,9 @@ const PipelineMonitor = () => {
 
             {/* Submissions Table */}
             {pipelineData && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden transition-colors">
-                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/80 flex items-center justify-between">
-                        <h3 className="font-bold text-gray-900 dark:text-white">Submission Pipeline Status</h3>
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between" style={{ background: 'var(--bg-page)' }}>
+                        <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Submission Pipeline Status</h3>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                             <input
